@@ -1,0 +1,16 @@
+*.pdb
+*.obj
+examples/*/obj/**
+examples/*/bin/*.dll
+examples/*/bin/*.exe
+examples/*/.vs/**
+examples/*/*.opensdf
+examples/*/*.sln
+examples/*/*.sdf
+examples/*/*.vcxproj
+examples/*/*.filters
+examples/*/bin/*.exp
+examples/*/bin/*.lib
+examples/*/bin/*.ilk
+examples/*/*.rc
+examples/*/*.vcxproj.user
