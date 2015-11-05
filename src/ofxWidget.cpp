@@ -146,8 +146,8 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 
 		auto p = it->lock();
 		if (p) {
-			if (p->mResponder) {
-				p->mResponder(args_); // call the mouse event on the widget
+			if (p->mMouseResponder) {
+				p->mMouseResponder(args_); // call the mouse event on the widget
 			}
 		}
 	}

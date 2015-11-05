@@ -83,7 +83,7 @@ public:
 		mRect = rect_;
 	};
 
-	std::function<void(ofMouseEventArgs&)> mResponder; // this method be called on mouse event
+	std::function<void(ofMouseEventArgs&)> mMouseResponder; // this method be called on mouse event
 	std::function<void()> mDraw; // draw method for the widget.
 	
 	static void draw(); // draw widgets rect.
