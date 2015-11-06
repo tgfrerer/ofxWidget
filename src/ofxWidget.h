@@ -54,6 +54,8 @@ class WidgetEventResponder {
 
 	*/
 	void mouseEvent(ofMouseEventArgs& args);
+	void keyEvent(ofKeyEventArgs& args);
+
 public:
 	WidgetEventResponder();
 	~WidgetEventResponder();
@@ -67,6 +69,7 @@ class ofxWidget
 	// we update our widgetRects.
 	friend class WidgetEventResponder;
 	static void mouseEvent(ofMouseEventArgs& args);
+	static void keyEvent(ofKeyEventArgs& args);
 
 	ofxWidget();
 	ofRectangle mRect; // widget rect on screen
@@ -84,11 +87,12 @@ public:
 	};
 
 	std::function<void(ofMouseEventArgs&)> mMouseResponder; // this method be called on mouse event
+	std::function<void(ofKeyEventArgs&)> mKeyResponder; // this method be called on mouse event
 	std::function<void()> mDraw; // draw method for the widget.
 	
 	static void draw(); // draw widgets rect.
 
 public: // factory function
-	static shared_ptr<ofxWidget> makeWidget(const ofRectangle& rect_);
+	static shared_ptr<ofxWidget> make(const ofRectangle& rect_);
 
 };

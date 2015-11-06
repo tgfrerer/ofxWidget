@@ -21,6 +21,10 @@ WidgetEventResponder::WidgetEventResponder()
 	ofAddListener(ofEvents().mouseEntered, listener, &WidgetEventResponder::mouseEvent, prio);
 	ofAddListener(ofEvents().mouseExited, listener, &WidgetEventResponder::mouseEvent, prio);
 
+	// now add key event listeners
+
+	ofAddListener(ofEvents().keyPressed, listener, &WidgetEventResponder::keyEvent, prio);
+	ofAddListener(ofEvents().keyReleased, listener, &WidgetEventResponder::keyEvent, prio);
 
 	ofLogNotice() << "adding widget listener";
 }
@@ -31,6 +35,9 @@ WidgetEventResponder::~WidgetEventResponder()
 	auto listener = this;
 	auto prio = OF_EVENT_ORDER_AFTER_APP;
 
+	ofRemoveListener(ofEvents().keyReleased, listener, &WidgetEventResponder::keyEvent, prio);
+	ofRemoveListener(ofEvents().keyPressed, listener, &WidgetEventResponder::keyEvent, prio);
+
 	ofRemoveListener(ofEvents().mouseExited, listener, &WidgetEventResponder::mouseEvent, prio);
 	ofRemoveListener(ofEvents().mouseEntered, listener, &WidgetEventResponder::mouseEvent, prio);
 	ofRemoveListener(ofEvents().mouseScrolled, listener, &WidgetEventResponder::mouseEvent, prio);
@@ -40,17 +47,24 @@ WidgetEventResponder::~WidgetEventResponder()
 	ofRemoveListener(ofEvents().mouseDragged, listener, &WidgetEventResponder::mouseEvent, prio);
 
 }
+
 // ----------------------------------------------------------------------
 
 void WidgetEventResponder::mouseEvent(ofMouseEventArgs & args_)
 {
 	ofxWidget::mouseEvent(args_);
+}
 
+// ----------------------------------------------------------------------
+
+void WidgetEventResponder::keyEvent(ofKeyEventArgs & args_)
+{
+	ofxWidget::keyEvent(args_);
 }
 
 // ----------------------------------------------------------------------
 // widgets may only be created through this factory function
-shared_ptr<ofxWidget> ofxWidget::makeWidget(const ofRectangle& rect_) {
+shared_ptr<ofxWidget> ofxWidget::make(const ofRectangle& rect_) {
 	// register for mouse events
 	// this happens only when the first widget gets initialised.
 	static auto onlyResponder = make_shared<WidgetEventResponder>();
@@ -95,9 +109,8 @@ void ofxWidget::draw() {
 		auto p = it->lock();
 		if (p) {
 			if (p->mDraw) {
-				// TODO: we could set up th clip rect for the widget here...
+				// TODO: we could set up a clip rect for the widget here...
 				p->mDraw(); // call the widget
-
 			}
 			++it;
 		}
@@ -120,13 +133,13 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	float mx = args_.x;
 	float my = args_.y;
 
-	if (args_.type == ofMouseEventArgs::Scrolled) {
-		// scrolling is annoying, since the args.x and .y actually refer 
-		// to the scroll delta, and not the mouse position.
-		// so we need extract the mouse pos separately...
-		mx = ofGetMouseX();
-		my = ofGetMouseY();
-	}
+	//if (args_.type == ofMouseEventArgs::Scrolled) {
+	//	// scrolling is annoying, since the args.x and .y actually refer 
+	//	// to the scroll delta, and not the mouse position.
+	//	// so we need extract the mouse pos separately...
+	//	mx = ofGetMouseX();
+	//	my = ofGetMouseY();
+	//}
 
 	// find the first widget that is under the mouse.
 	auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
@@ -167,3 +180,19 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	}
 }
 
+// ----------------------------------------------------------------------
+// static method - called once for all widgets
+void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
+
+	if (sAllWidgets.empty()) return;
+
+	// only the frontmost widget will receive the event.
+
+	auto p = sAllWidgets.front().lock();
+
+	if (p->mKeyResponder) {
+		p->mKeyResponder(args_);
+	}
+
+}
+// ----------------------------------------------------------------------
