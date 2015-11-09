@@ -98,6 +98,8 @@ ofxWidget::~ofxWidget() {
 
 }
 
+// ----------------------------------------------------------------------
+
 void ofxWidget::draw() {
 
 	// make sure to draw last to first,
@@ -108,9 +110,29 @@ void ofxWidget::draw() {
 	while (it != sAllWidgets.crend()) {
 		auto p = it->lock();
 		if (p) {
-			if (p->mDraw) {
+			if (p->mDraw && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
 				p->mDraw(); // call the widget
+			}
+			++it;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------
+void ofxWidget::update() {
+
+	// make sure to draw last to first,
+	// since we don't do z-testing.
+
+	auto it = sAllWidgets.crbegin();
+
+	while (it != sAllWidgets.crend()) {
+		auto p = it->lock();
+		if (p) {
+			if (p->mUpdate && p->mVisible) {
+				// TODO: we could set up a clip rect for the widget here...
+				p->mUpdate(); // call the widget
 			}
 			++it;
 		}
@@ -141,10 +163,10 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	//	my = ofGetMouseY();
 	//}
 
-	// find the first widget that is under the mouse.
+	// find the first widget that is under the mouse, that is also visible
 	auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
 		auto p = w.lock();
-		if (p && p->mRect.inside(mx, my)) {
+		if (p && p->mVisible && p->mRect.inside(mx, my)) {
 			return true;
 		} else {
 			return false;
@@ -187,10 +209,11 @@ void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 	if (sAllWidgets.empty()) return;
 
 	// only the frontmost widget will receive the event.
+	// but only if it is visible
 
 	auto p = sAllWidgets.front().lock();
 
-	if (p->mKeyResponder) {
+	if (p->mKeyResponder && p->mVisible) {
 		p->mKeyResponder(args_);
 	}
 

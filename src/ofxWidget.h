@@ -75,6 +75,8 @@ class ofxWidget
 	ofRectangle mRect; // widget rect on screen
 	ofColor		mColor;
 
+	bool mVisible = true; // layer visiblity
+
 public:
 	~ofxWidget();
 
@@ -86,11 +88,21 @@ public:
 		mRect = rect_;
 	};
 
+	void setVisibility(bool visible_) {
+		mVisible = visible_;
+	}
+
+	const bool getVisibility() const {
+		return mVisible;
+	};
+
 	std::function<void(ofMouseEventArgs&)> mMouseResponder; // this method be called on mouse event
 	std::function<void(ofKeyEventArgs&)> mKeyResponder; // this method be called on mouse event
-	std::function<void()> mDraw; // draw method for the widget.
+	std::function<void()> mUpdate; // update method for the widget.
+	std::function<void()> mDraw;   // draw method for the widget.
 	
 	static void draw(); // draw widgets rect.
+	static void update();
 
 public: // factory function
 	static shared_ptr<ofxWidget> make(const ofRectangle& rect_);
