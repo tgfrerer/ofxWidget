@@ -19,18 +19,7 @@ void ofApp::setup(){
 		g.setup();
 	}
 
-	auto test = make_shared<int>(3);
-	weak_ptr<int> wTest{ test };
-
-	if (auto &p = wTest.lock()) {
-		ofLog() << "we can haz lock: " << *p;
-	}
-
-	test.reset();
-
-	if (auto &p = wTest.lock()) {
-		ofLog() << "we can should not haz lock: " << *p;
-	}
+	
 
 
 }
