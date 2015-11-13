@@ -208,13 +208,19 @@ void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 	if (sAllWidgets.empty()) return;
 
-	// only the frontmost widget will receive the event.
-	// but only if it is visible
+	// only the frontmost visible widget will receive the event.
+	
+	
+	for (auto &p : sAllWidgets) {
+		auto w = p.lock();
 
-	auto p = sAllWidgets.front().lock();
+		if (w->mKeyResponder && w->mVisible) {
+			w->mKeyResponder(args_);
+			// once the event has been forwarded, we don't have to look for any widgets we 
+			// might send it to.
+			break;
+		}
 
-	if (p->mKeyResponder && p->mVisible) {
-		p->mKeyResponder(args_);
 	}
 
 }
