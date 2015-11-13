@@ -4,6 +4,8 @@
 // ----------------------------------------------------------------------
 
 // we want to keep track of all widgets that have been created.
+
+// this is a "flattened" version of our widget scene graph. 
 std::list<weak_ptr<ofxWidget>> sAllWidgets;
 
 // ----------------------------------------------------------------------
@@ -79,7 +81,6 @@ shared_ptr<ofxWidget> ofxWidget::make(const ofRectangle& rect_) {
 // ----------------------------------------------------------------------
 
 ofxWidget::ofxWidget() {
-	;
 }
 
 // ----------------------------------------------------------------------
@@ -100,6 +101,33 @@ ofxWidget::~ofxWidget() {
 
 // ----------------------------------------------------------------------
 
+void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
+{
+	
+	if (auto p = mParent.lock()) {
+		// how weird! this widget has a parent already.
+		// delete the widgets from the parent's child list
+
+	}
+
+    // TODO: make sure this widget is not anyone's child already, 
+	// by deleting the current parent's child references to this widget.
+
+	// then set the new parent
+
+	mParent = p_;
+
+	// add this widget to the selected parent's child list.
+
+	// then, make sure the flattened list of widgets is correct
+	// by re-building sAllWidgets:
+	
+	// for all top-level (parentless widgets):
+	// add children widgets recursively behind them into a flattened list.
+
+}
+// ----------------------------------------------------------------------
+
 void ofxWidget::draw() {
 
 	// make sure to draw last to first,
@@ -108,8 +136,8 @@ void ofxWidget::draw() {
 	auto it = sAllWidgets.crbegin();
 
 	while (it != sAllWidgets.crend()) {
-		auto p = it->lock();
-		if (p) {
+		
+		if (auto p = it->lock()) {
 			if (p->mDraw && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
 				p->mDraw(); // call the widget
@@ -128,8 +156,8 @@ void ofxWidget::update() {
 	auto it = sAllWidgets.crbegin();
 
 	while (it != sAllWidgets.crend()) {
-		auto p = it->lock();
-		if (p) {
+		
+		if (auto p = it->lock()) {
 			if (p->mUpdate && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
 				p->mUpdate(); // call the widget
@@ -154,14 +182,6 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 
 	float mx = args_.x;
 	float my = args_.y;
-
-	//if (args_.type == ofMouseEventArgs::Scrolled) {
-	//	// scrolling is annoying, since the args.x and .y actually refer 
-	//	// to the scroll delta, and not the mouse position.
-	//	// so we need extract the mouse pos separately...
-	//	mx = ofGetMouseX();
-	//	my = ofGetMouseY();
-	//}
 
 	// find the first widget that is under the mouse, that is also visible
 	auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
@@ -196,9 +216,30 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 		// for this, we use the splice operation, which just moves elements around in our list,
 		// but does not involve any creation/desctruction of elements.
 
-		// transfers element in range [it,std::next(it)) to position
-		// sAllWidgets.begin()
+		// transfers element in range [it,std::next(it)) to position sAllWidgets.begin()
 		sAllWidgets.splice(sAllWidgets.begin(), sAllWidgets, it, std::next(it));
+		
+		// if the widget would have children, these would now need to be found,
+		// and moved behind us, in the correct order:
+
+		// re-order layers:
+
+		// we need to build a graph of all widgets based on widget parent relationships
+		// then, rearrange that graph so that the widget
+		// gets rendered before all other widgets.
+
+
+		//auto & currentWidgetParent = it->lock()->mParent;
+
+		//for (auto & wIt = sAllWidgets.begin(); wIt != sAllWidgets.end(); ++wIt) {
+		//	// comparison based on http://stackoverflow.com/questions/12301916/equality-compare-stdweak-ptr
+		//	if (wIt != it && !currentWidgetParent.owner_before(*wIt) && !wIt->owner_before(currentWidgetParent)) {
+		//		// this is a sibling
+		//		ofLog() << "sibling found!";
+		//	}
+		//}
+
+
 	}
 }
 

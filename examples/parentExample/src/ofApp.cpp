@@ -4,13 +4,34 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 
-	for (int i = 0; i < 5; ++i) {
-		guiElements.emplace_back();
-	}
+	guiElements.emplace_back(10.f, 10.f, 400.f, 400.f);
+	
+	guiElements.emplace_back(10.f, 30.f, 400.f, 400.f);
+	
+	guiElements.emplace_back(30.f, 20.f + 10.f, 100.f, 30.f);
+	guiElements.emplace_back(30.f, 20.f + 50.f, 100.f, 300.f);
+
+	guiElements[2].setParent(guiElements[1]);
+	guiElements[3].setParent(guiElements[1]);
+
 
 	for (auto&g : guiElements) {
 		g.setup();
 	}
+
+	auto test = make_shared<int>(3);
+	weak_ptr<int> wTest{ test };
+
+	if (auto &p = wTest.lock()) {
+		ofLog() << "we can haz lock: " << *p;
+	}
+
+	test.reset();
+
+	if (auto &p = wTest.lock()) {
+		ofLog() << "we can should not haz lock: " << *p;
+	}
+
 
 }
 

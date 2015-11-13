@@ -40,6 +40,8 @@ If the widget has no events bound, no events will get called.
 
 */
 
+class ofxWidget;
+
 class WidgetEventResponder {
 
 	/*
@@ -63,7 +65,6 @@ public:
 
 class ofxWidget 
 {
-
 	// we keep track of all widget rectangles.
 	// everytime a new widget is created or destroyed,
 	// we update our widgetRects.
@@ -76,6 +77,9 @@ class ofxWidget
 	ofColor		mColor;
 
 	bool mVisible = true; // layer visiblity
+
+	std::list <std::weak_ptr<ofxWidget>> mChildren;	 // this gets updated by a static method.
+	std::weak_ptr<ofxWidget> mParent;				 // we keep this around so we know whether this widget has any parents.
 
 public:
 	~ofxWidget();
@@ -101,6 +105,8 @@ public:
 	std::function<void()> mUpdate; // update method for the widget.
 	std::function<void()> mDraw;   // draw method for the widget.
 	
+	void setParent(std::shared_ptr<ofxWidget>& p_); // set a widget's parent, this will update the children list, by calling a method over all widgets.
+
 	static void draw(); // draw widgets rect.
 	static void update();
 

@@ -11,8 +11,8 @@ class TestGuiElement {
 	ofColor				  mColor;
 public:
 
-	TestGuiElement() {
-		mWidget = std::move(ofxWidget::make({ (rand() % 10) * 10 + 10.f, (rand() % 10) * 10 + 10.f, 200.f, 200.f }));
+	TestGuiElement(float x_, float y_, float w_, float h_ ) {
+		mWidget = std::move(ofxWidget::make({x_, y_, w_, h_  }));
 
 		// you can assign your widget pointer here,
 		// but don't assign any widget methods like setting mDraw or the mouse responder,
@@ -27,6 +27,10 @@ public:
 		mWidget->mDraw = std::bind(&TestGuiElement::draw, this);
 		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
 
+	}
+
+	void setParent(TestGuiElement& parent_) {
+		mWidget->setParent(parent_.mWidget);
 	}
 
 	void update() {};
