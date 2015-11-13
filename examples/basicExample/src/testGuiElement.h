@@ -12,7 +12,7 @@ class TestGuiElement {
 public:
 
 	TestGuiElement() {
-		mWidget = std::move(ofxWidget::makeWidget({ (rand() % 10) * 10 + 10.f, (rand() % 10) * 10 + 10.f, 200.f, 200.f }));
+		mWidget = std::move(ofxWidget::make({ (rand() % 10) * 10 + 10.f, (rand() % 10) * 10 + 10.f, 200.f, 200.f }));
 
 		// you can assign your widget pointer here,
 		// but don't assign any widget methods like setting mDraw or the mouse responder,
