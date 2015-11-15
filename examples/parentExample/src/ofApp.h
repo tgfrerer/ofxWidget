@@ -6,7 +6,11 @@
 
 class ofApp : public ofBaseApp{
 
-	vector<TestGuiElement> guiElements;
+	// the problem is probably here: since the objects 
+	// may move, the bind position is not guaranteed to 
+	// resolve to the correct object.
+
+	vector<shared_ptr<TestGuiElement>> guiElements;	// a list is ok, a vector not. // a map is ok, too.
 
 	public:
 		void setup();

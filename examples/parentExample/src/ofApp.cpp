@@ -4,19 +4,23 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 
-	guiElements.emplace_back(10.f, 10.f, 400.f, 400.f);
+	guiElements.emplace_back( make_shared<TestGuiElement>(10.f, 10.f, 400.f, 400.f) );
 	
-	guiElements.emplace_back(10.f, 30.f, 400.f, 400.f);
-	
-	guiElements.emplace_back(30.f, 20.f + 10.f, 100.f, 30.f);
-	guiElements.emplace_back(30.f, 20.f + 50.f, 100.f, 300.f);
+	guiElements.emplace_back(make_shared<TestGuiElement>(100.f, 30.f, 400.f, 400.f ));
+	guiElements.emplace_back(make_shared<TestGuiElement>(130.f, 20.f + 50.f, 100.f, 300.f));
+	guiElements.emplace_back(make_shared<TestGuiElement>(130.f, 20.f + 10.f, 100.f, 30.f));
+	guiElements.emplace_back(make_shared<TestGuiElement>(130.f, 25.f + 100.f, 30.f, 30.f));
 
-	guiElements[2].setParent(guiElements[1]);
-	guiElements[3].setParent(guiElements[1]);
+	guiElements[2]->setParent(*guiElements[1]);
+	guiElements[3]->setParent(*guiElements[1]);
+	guiElements[4]->setParent(*guiElements[0]);
 
+	//it->setParent(guiElements.front()); // now set the parent of element 1 to be element 0
+
+	// it's deleting the wrong widget shared_ptr!
 
 	for (auto&g : guiElements) {
-		g.setup();
+		g->setup();
 	}
 
 	
@@ -41,7 +45,8 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-
+	guiElements.erase(std::next(guiElements.begin()));
+	ofLog();
 }
 
 //--------------------------------------------------------------

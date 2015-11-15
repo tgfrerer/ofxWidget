@@ -9,11 +9,13 @@ class TestGuiElement {
 
 	shared_ptr<ofxWidget> mWidget;
 	ofColor				  mColor;
+	ofRectangle			  mRect;
 public:
 
 	TestGuiElement(float x_, float y_, float w_, float h_ ) {
-		mWidget = std::move(ofxWidget::make({x_, y_, w_, h_  }));
+		mWidget = ofxWidget::make({x_, y_, w_, h_  });
 
+		mRect = { x_, y_, w_, h_ };
 		// you can assign your widget pointer here,
 		// but don't assign any widget methods like setting mDraw or the mouse responder,
 		// since the "this" object is not fully in place right now.
@@ -24,7 +26,12 @@ public:
 
 		// tell the widget that we want to draw though it
 		// if you don't set it, the widget will not call draw
+
+		// todo: careful with bind: if the underlaying object gets re-allocated,
+		// "this" will not point to the correct object anymore!
+
 		mWidget->mDraw = std::bind(&TestGuiElement::draw, this);
+		
 		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
 
 	}
