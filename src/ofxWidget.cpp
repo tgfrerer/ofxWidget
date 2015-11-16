@@ -314,36 +314,37 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 
 	sLastMousePos.set(mx, my);
 
-	// find the first widget that is under the mouse, that is also visible
-	auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
-		auto p = w.lock();
-		if (p && p->mVisible && p->mRect.inside(mx, my)) {
-			return true;
-		} else {
-			return false;
-		}
-	});
-
-	if (it != sAllWidgets.end()) {
-		// we are over a widget.
-
-		// if the event is a mouse down, then we need to make sure that the 
-		// widget is moved to the front of the widget list.
-
-		auto p = it->lock();
-		if (p) {
-			if (p->mMouseResponder) {
-				p->mMouseResponder(args_); // call the mouse event on the widget
-			}
-		}
-	}
+	// if we have a mouse down, we re-order widgets.
 
 	// if we have a click, we want to make sure the widget gets to be the topmost widget.
-	if (args_.type == ofMouseEventArgs::Pressed && it != sAllWidgets.end() && it != sAllWidgets.begin()) {
+	if (args_.type == ofMouseEventArgs::Pressed) {
 
-		bringToFront(it);
+		// find the first widget that is under the mouse, that is also visible
+		auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
+			auto p = w.lock();
+			if (p && p->mVisible && p->mRect.inside(mx, my)) {
+				return true;
+			} else {
+				return false;
+			}
+		});
 
+		if (it != sAllWidgets.end() && it != sAllWidgets.begin()) {
+			ofLog() << "reorder";
+			bringToFront(it);
+		}
 	}
+
+	// now, we will attempt to send the mouse event to the first widget,
+	// but only if it happens to be under the mouse.
+
+	if (auto w = sAllWidgets.front().lock()) {
+		if (w->getRect().inside(sLastMousePos)) {
+			if (w->mMouseResponder)
+				w->mMouseResponder(args_);
+		}
+	}
+
 }
 
 // ----------------------------------------------------------------------
