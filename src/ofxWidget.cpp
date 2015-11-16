@@ -2,13 +2,14 @@
 #include "ofGraphics.h"
 #include "ofUtils.h"
 #include <algorithm>
-#include <atomic>
 // ----------------------------------------------------------------------
 
 // we want to keep track of all widgets that have been created.
 
 // this is a "flattened" version of our widget scene graph. 
 std::list<weak_ptr<ofxWidget>> sAllWidgets;
+
+ofVec2f ofxWidget::sLastMousePos{ 0.f,0.f };
 
 // ----------------------------------------------------------------------
 
@@ -311,6 +312,8 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	float mx = args_.x;
 	float my = args_.y;
 
+	sLastMousePos.set(mx, my);
+
 	// find the first widget that is under the mouse, that is also visible
 	auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
 		auto p = w.lock();
@@ -349,14 +352,15 @@ void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 	if (sAllWidgets.empty()) return;
 
-	// only the frontmost visible widget will receive the event.
-
-
+	// only the first widget that is visible and 
+	// under the mouse will receive the event.
+	
 	for (auto &p : sAllWidgets) {
 		auto w = p.lock();
 
-		if (w->mKeyResponder && w->mVisible) {
-			w->mKeyResponder(args_);
+		if (w && w->mVisible && w->getRect().inside(sLastMousePos)) {
+			if (w->mKeyResponder)
+				w->mKeyResponder(args_);
 			// once the event has been forwarded, we don't have to look for any widgets we 
 			// might send it to.
 			break;

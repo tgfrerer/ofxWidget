@@ -94,6 +94,8 @@ class ofxWidget
 	static void mouseEvent(ofMouseEventArgs& args);
 	static void keyEvent(ofKeyEventArgs& args);
 	static void bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_);
+	
+	static ofVec2f sLastMousePos;
 
 	ofxWidget();
 	ofRectangle mRect; // widget rect on screen
