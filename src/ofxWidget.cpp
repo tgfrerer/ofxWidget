@@ -239,7 +239,8 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 
 	// first, let the first element know that it is losing focus
 	if (auto  firstElement = sAllWidgets.begin()->lock()) {
-		firstElement->mExitFocus();
+		if (firstElement->mExitFocus)
+			firstElement->mExitFocus();
 	}
 
 	auto parent = element->mParent.lock();
