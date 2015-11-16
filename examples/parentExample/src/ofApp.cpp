@@ -11,9 +11,19 @@ void ofApp::setup(){
 	guiElements.emplace_back(make_shared<TestGuiElement>(130.f, 20.f + 10.f, 100.f, 30.f));
 	guiElements.emplace_back(make_shared<TestGuiElement>(130.f, 25.f + 100.f, 30.f, 30.f));
 
+	guiElements.emplace_back(make_shared<TestGuiElement>(530.f, 30.f, 300.f, 300.f));
+	guiElements.emplace_back(make_shared<TestGuiElement>(530.f, 50.f, 50.f, 160.f));
+	guiElements.emplace_back(make_shared<TestGuiElement>(530.f, 80.f, 30.f, 30.f));
+
+
 	guiElements[2]->setParent(*guiElements[1]);
 	guiElements[3]->setParent(*guiElements[1]);
 	guiElements[4]->setParent(*guiElements[0]);
+
+	guiElements[6]->setParent(*guiElements[5]);
+	guiElements[7]->setParent(*guiElements[6]);
+
+
 
 	//it->setParent(guiElements.front()); // now set the parent of element 1 to be element 0
 
@@ -45,8 +55,9 @@ void ofApp::keyPressed(int key){
 
 //--------------------------------------------------------------
 void ofApp::keyReleased(int key){
-	guiElements.erase(std::next(guiElements.begin()));
-	ofLog();
+	if (key == 'x') {
+		guiElements.erase(std::next(guiElements.begin()));
+	}
 }
 
 //--------------------------------------------------------------

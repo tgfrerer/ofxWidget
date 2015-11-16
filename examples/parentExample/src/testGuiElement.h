@@ -4,6 +4,7 @@
 #include <functional>
 #include "ofGraphics.h"
 #include "ofColor.h"
+#include "ofEvents.h"
 
 class TestGuiElement {
 
@@ -31,13 +32,19 @@ public:
 		// "this" will not point to the correct object anymore!
 
 		mWidget->mDraw = std::bind(&TestGuiElement::draw, this);
-		
+		mWidget->mKeyResponder = std::bind(&TestGuiElement::keyResponder, this, std::placeholders::_1);
+
 		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
 
 	}
 
 	void setParent(TestGuiElement& parent_) {
 		mWidget->setParent(parent_.mWidget);
+	}
+
+	void keyResponder(ofKeyEventArgs& args_) {
+		// change color on key events
+		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
 	}
 
 	void update() {};
