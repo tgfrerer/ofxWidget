@@ -127,6 +127,7 @@ public:
 
 	std::function<void(ofMouseEventArgs&)> mMouseResponder; // this method be called on mouse event
 	std::function<void(ofKeyEventArgs&)> mKeyResponder; // this method be called on mouse event
+	std::function<void()> mActivateCallback;			// called when this widget gets activated
 	std::function<void()> mUpdate; // update method for the widget.
 	std::function<void()> mDraw;   // draw method for the widget.
 	
@@ -135,6 +136,7 @@ public:
 	static void draw(); // draw widgets rect.
 	static void update();
 
+public: // widget logic functions
 	bool isAtFront(); // returns whether this wiget is at the front (and receiving events)
 
 public: // factory function

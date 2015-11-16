@@ -13,13 +13,19 @@ ofVec2f ofxWidget::sLastMousePos{ 0.f,0.f };
 
 // ----------------------------------------------------------------------
 
+bool isSame(weak_ptr<ofxWidget> &lhs, weak_ptr<ofxWidget>&rhs) {
+	return (!rhs.owner_before(lhs) && !lhs.owner_before(rhs));
+}
+
+// ----------------------------------------------------------------------
+
 auto findIt(weak_ptr<ofxWidget>& needle_, list<weak_ptr<ofxWidget>>::iterator start_ = sAllWidgets.begin()) {
 	// find needle in widget list haystack
 	return find_if(start_, sAllWidgets.end(), [needle = needle_](weak_ptr<ofxWidget>&w) {
 		// finds if it two shared ptrs are the same.
 		return (!w.owner_before(needle) && !needle.owner_before(w));
 	});
-};
+}
 
 // ----------------------------------------------------------------------
 
@@ -27,8 +33,7 @@ auto findIt(shared_ptr<ofxWidget>& needle_) {
 	// find needle in widget list haystack
 	weak_ptr<ofxWidget> wkP = needle_;
 	return findIt(wkP);
-};
-
+}
 
 
 // ----------------------------------------------------------------------
@@ -265,6 +270,13 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 			std::next(elementIt));						 // to the end of our now most senior parent element range
 	}
 
+	// now that the new wiget is at the front, send an activate callback.
+	if (auto w = sAllWidgets.front().lock()) {
+		if (w->mActivateCallback)
+			w->mActivateCallback();
+	}
+	
+
 }
 
 // ----------------------------------------------------------------------
@@ -299,12 +311,6 @@ void ofxWidget::update() {
 		}
 	}
 }
-
-// ----------------------------------------------------------------------
-
-bool ofxWidget::isAtFront() {
-	return (sAllWidgets.empty()) ? false : (!mThis.owner_before(sAllWidgets.front()) && !sAllWidgets.front().owner_before(mThis));
-};
 
 // ----------------------------------------------------------------------
 // static method - called once for all widgets
@@ -368,22 +374,11 @@ void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 			w->mKeyResponder(args_);
 	}
 
-
-	//// only the first widget that is visible and 
-	//// under the mouse will receive the event.
-	//
-	//for (auto &p : sAllWidgets) {
-	//	auto w = p.lock();
-
-	//	if (w && w->mVisible && w->getRect().inside(sLastMousePos)) {
-	//		if (w->mKeyResponder)
-	//			w->mKeyResponder(args_);
-	//		// once the event has been forwarded, we don't have to look for any widgets we 
-	//		// might send it to.
-	//		break;
-	//	}
-
-	//}
-
 }
+// ----------------------------------------------------------------------
+
+bool ofxWidget::isAtFront() {
+	return (sAllWidgets.empty()) ? false : isSame(mThis, sAllWidgets.front());
+}
+
 // ----------------------------------------------------------------------
