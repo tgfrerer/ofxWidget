@@ -135,6 +135,8 @@ public:
 	static void draw(); // draw widgets rect.
 	static void update();
 
+	bool isAtFront(); // returns whether this wiget is at the front (and receiving events)
+
 public: // factory function
 	static shared_ptr<ofxWidget> make(const ofRectangle& rect_);
 

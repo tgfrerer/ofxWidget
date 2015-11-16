@@ -29,6 +29,8 @@ auto findIt(shared_ptr<ofxWidget>& needle_) {
 	return findIt(wkP);
 };
 
+
+
 // ----------------------------------------------------------------------
 
 WidgetEventResponder::WidgetEventResponder()
@@ -97,7 +99,7 @@ shared_ptr<ofxWidget> ofxWidget::make(const ofRectangle& rect_) {
 	widget->mThis = widget; // widget keeps weak store to self - will this make it leak?
 	// it should not, since we're creating the widget using new(), and not make_shared
 
-	sAllWidgets.emplace_front(widget);  // store a weak pointer to the new object in our list
+	sAllWidgets.emplace_back(widget);  // store a weak pointer to the new object in our list
 	return std::move(widget);
 }
 
@@ -198,6 +200,7 @@ void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 	}
 
 }
+
 // ----------------------------------------------------------------------
 
 void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
@@ -217,20 +220,20 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 	// ---------| invariant: element is valid
 
 	/*
-	
+
 	Algorithm:
 
 	recursively: while current object range has a parent, put current object range to the front of parent range
-	make parent range current object range. repeat until there is no parent range. 
+	make parent range current object range. repeat until there is no parent range.
 
 	as soon as there is no parent anymore, put last object range to the front of the list
 
 	heuristic: parent's iterators position always to be found after current iterator.
-	
+
 	*/
 	auto parent = element->mParent.lock();
 	auto elementIt = it_;
-	
+
 	while (parent) {
 
 		auto itParent = findIt(element->mParent, std::next(elementIt)); // start our search for parent after current element.
@@ -243,7 +246,7 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 				std::prev(elementIt, element->mNumChildren),
 				std::next(elementIt));		// range of elements to move -> range of current element and its children
 		}
-	
+
 		// because sAllWidgets is a list, splice will only invalidate iterators 
 		// before our next search range.
 
@@ -263,6 +266,7 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 	}
 
 }
+
 // ----------------------------------------------------------------------
 
 void ofxWidget::draw() {
@@ -274,7 +278,7 @@ void ofxWidget::draw() {
 			if (p->mDraw && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
 				p->mDraw(); // call the widget
-				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y+10);
+				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y + 10);
 			}
 		}
 		zOrder++;
@@ -295,6 +299,12 @@ void ofxWidget::update() {
 		}
 	}
 }
+
+// ----------------------------------------------------------------------
+
+bool ofxWidget::isAtFront() {
+	return (sAllWidgets.empty()) ? false : (!mThis.owner_before(sAllWidgets.front()) && !sAllWidgets.front().owner_before(mThis));
+};
 
 // ----------------------------------------------------------------------
 // static method - called once for all widgets
@@ -353,21 +363,27 @@ void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 	if (sAllWidgets.empty()) return;
 
-	// only the first widget that is visible and 
-	// under the mouse will receive the event.
-	
-	for (auto &p : sAllWidgets) {
-		auto w = p.lock();
-
-		if (w && w->mVisible && w->getRect().inside(sLastMousePos)) {
-			if (w->mKeyResponder)
-				w->mKeyResponder(args_);
-			// once the event has been forwarded, we don't have to look for any widgets we 
-			// might send it to.
-			break;
-		}
-
+	if (auto w = sAllWidgets.front().lock()) {
+		if (w->mKeyResponder)
+			w->mKeyResponder(args_);
 	}
+
+
+	//// only the first widget that is visible and 
+	//// under the mouse will receive the event.
+	//
+	//for (auto &p : sAllWidgets) {
+	//	auto w = p.lock();
+
+	//	if (w && w->mVisible && w->getRect().inside(sLastMousePos)) {
+	//		if (w->mKeyResponder)
+	//			w->mKeyResponder(args_);
+	//		// once the event has been forwarded, we don't have to look for any widgets we 
+	//		// might send it to.
+	//		break;
+	//	}
+
+	//}
 
 }
 // ----------------------------------------------------------------------
