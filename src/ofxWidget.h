@@ -127,7 +127,10 @@ public:
 
 	std::function<void(ofMouseEventArgs&)> mMouseResponder; // this method be called on mouse event
 	std::function<void(ofKeyEventArgs&)> mKeyResponder; // this method be called on mouse event
-	std::function<void()> mActivateCallback;			// called when this widget gets activated
+	
+	std::function<void()> mEnterFocus;			// called when this widget gets activated
+	std::function<void()> mExitFocus;			// called when this widget gets activated
+
 	std::function<void()> mUpdate; // update method for the widget.
 	std::function<void()> mDraw;   // draw method for the widget.
 	

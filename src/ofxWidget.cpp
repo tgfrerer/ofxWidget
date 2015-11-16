@@ -236,6 +236,12 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 	heuristic: parent's iterators position always to be found after current iterator.
 
 	*/
+
+	// first, let the first element know that it is losing focus
+	if (auto  firstElement = sAllWidgets.begin()->lock()) {
+		firstElement->mExitFocus();
+	}
+
 	auto parent = element->mParent.lock();
 	auto elementIt = it_;
 
@@ -272,10 +278,10 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 
 	// now that the new wiget is at the front, send an activate callback.
 	if (auto w = sAllWidgets.front().lock()) {
-		if (w->mActivateCallback)
-			w->mActivateCallback();
+		if (w->mEnterFocus)
+			w->mEnterFocus();
 	}
-	
+
 
 }
 
