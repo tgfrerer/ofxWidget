@@ -274,7 +274,7 @@ void ofxWidget::draw() {
 			if (p->mDraw && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
 				p->mDraw(); // call the widget
-				ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y+10);
+				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y+10);
 			}
 		}
 		zOrder++;
