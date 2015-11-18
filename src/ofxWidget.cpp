@@ -297,7 +297,14 @@ void ofxWidget::draw() {
 			if (p->mDraw && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
 				p->mDraw(); // call the widget
-				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y + 10);
+				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) {
+					ofPushStyle();
+					ofSetColor(ofColor::red, 16);
+					ofDrawRectangle(p->getRect());
+					ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y + 10);
+
+					ofPopStyle();
+				}
 			}
 		}
 		zOrder++;
