@@ -299,7 +299,7 @@ void ofxWidget::draw() {
 				p->mDraw(); // call the widget
 				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) {
 					ofPushStyle();
-					ofSetColor(ofColor::red, 16);
+					ofSetColor(ofColor::red, 64);
 					ofDrawRectangle(p->getRect());
 					ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y + 10);
 
