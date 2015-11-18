@@ -305,9 +305,16 @@ void ofxWidget::draw() {
 
 					ofPopStyle();
 				}
+				zOrder++;
+			} else {
+				// we can jump ahead by the number of children,
+				// since if a parent layer is invisible, 
+				// this means that its children must be 
+				// invisible, too.
+				std::advance(it, p->mNumChildren);
 			}
 		}
-		zOrder++;
+		
 	}
 }
 
