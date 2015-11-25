@@ -240,7 +240,7 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 
 	as soon as there is no parent anymore, put last object range to the front of the list
 
-	heuristic: parent's iterators position always to be found after current iterator.
+	Heuristic: parent iterator's position always to be found after current iterator.
 
 	*/
 
@@ -321,7 +321,7 @@ void ofxWidget::draw() {
 				std::advance(it, p->mNumChildren);
 			}
 		}
-		
+
 	}
 }
 
@@ -341,13 +341,17 @@ void ofxWidget::update() {
 }
 
 // ----------------------------------------------------------------------
-// static method - called once for all widgets
+// static method - called once for all widgets by the
+//                 WidgetEventResponder, which self-
+//                 registers to all events upon creation.
+//
 void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
-	// Check whether the mouse is inside, otherwise discard mouse event,
-	// or do all other sorts of things with this widget.
 
-	// all visible widgets need to be sorted front to back
-	// then we can do a hit test, and trigger the first hit widget.
+	// If we register a mouse down event, we do a hit test over
+	// all visible widgets, and re-order if necessary.
+	// Then, and in all other cases, we do a hit-test on the 
+	// frontmost widget and, if positive, forward the event to this 
+	// widget.
 
 	if (sAllWidgets.empty()) return;
 
@@ -355,8 +359,6 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 
 	float mx = args_.x;
 	float my = args_.y;
-
-	sLastMousePos.set(mx, my);
 
 	// if we have a mouse down, we re-order widgets.
 
@@ -386,12 +388,18 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// it can't just be the frontmost one.
 
 	if (auto w = sAllWidgets.front().lock()) {
-		if (w->getRect().inside(sLastMousePos)) {
+		if (w->getRect().inside({ mx, my, 0.f })) {
 			if (w->mMouseResponder)
 				w->mMouseResponder(args_);
+		} else {
+			// TODO: we should send a "mouse left" event if the last mousepos was inside
+			// and a "mouse enter" event if the last mousePos was outside.
 		}
 	}
 
+	// store last mouse position last thing, so that 
+	// we are able to calculate a difference.
+	sLastMousePos.set(mx, my);
 }
 
 // ----------------------------------------------------------------------

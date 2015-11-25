@@ -62,9 +62,33 @@ If the widget has no events bound, no events will get called.
 
 ISSUES
 
-Q: How do we deal with container widgets? Should these receive 
-   user input? At the moment it appears as if only the front-
-   most widget receives input.
+Q: How do we deal with parent widgets? Should these receive 
+   user input from their children? 
+
+A: At the moment it appears as if only the front-most widget 
+   receives input, unless we are registering a mouse down, at 
+   which point the widgets are re-ordered.
+
+   This also means that a widget with children will never re-
+   ceive keyboard input, since one of its children will ne-
+   cessairily be further up front.
+
+   Children may, however, bubble user input to their parents.
+
+Q: Do we want to accelerate the hit testing for widgets any 
+   further?
+
+A: At the moment hit testing only happens when we click, and 
+   appears to be fast enough. If we wanted to send enter/exit
+   events to wigets which have not yet received the focus, 
+   we would have to do hit-testing for every position change.
+   At this point it will become interesting to think about 
+   spatial hashes, etc.
+
+Q: Is there a way to stop events form being further processed?
+
+TODO: reserach event bubbling
+	
 
 */
 
