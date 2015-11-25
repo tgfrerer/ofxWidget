@@ -44,7 +44,17 @@ public:
 
 	void keyResponder(ofKeyEventArgs& args_) {
 		// change color on key events
-		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
+		if (args_.key == ' ') {
+			mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
+		}
+		
+		if (auto p = mWidget->getParent().lock()) {
+			// Our widget has parent.
+			// now we need to find out if it also has a method that responds to key presses.
+			if (p->mKeyResponder) {
+				p->mKeyResponder(args_); // forward this event.
+			}
+		}
 	}
 
 	void update() {};

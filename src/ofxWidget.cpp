@@ -157,7 +157,7 @@ void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 
 	if (auto p = mParent.lock()) {
 
-		// todo: 
+		// TODO: 
 
 		// how weird! this widget has a parent already.
 		// delete the widgets from the parent's child list
@@ -204,6 +204,13 @@ void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 		}
 	}
 
+}
+
+// ----------------------------------------------------------------------
+
+weak_ptr<ofxWidget>& ofxWidget::getParent()
+{
+	return mParent;
 }
 
 // ----------------------------------------------------------------------
@@ -375,6 +382,9 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// now, we will attempt to send the mouse event to the first widget,
 	// but only if it happens to be under the mouse.
 
+	// TODO: we need to remember which widget has the focus. 
+	// it can't just be the frontmost one.
+
 	if (auto w = sAllWidgets.front().lock()) {
 		if (w->getRect().inside(sLastMousePos)) {
 			if (w->mMouseResponder)
@@ -385,7 +395,7 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 }
 
 // ----------------------------------------------------------------------
-// static method - called once for all widgets
+// static method - called once for any widgets
 void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 	if (sAllWidgets.empty()) return;

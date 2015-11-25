@@ -58,6 +58,13 @@ with its (optional) mouseEvent().
 
 If the widget has no events bound, no events will get called.
 
+-------------------------------------------------------------
+
+ISSUES
+
+Q: How do we deal with container widgets? Should these receive 
+   user input? At the moment it appears as if only the front-
+   most widget receives input.
 
 */
 
@@ -135,6 +142,8 @@ public:
 	std::function<void()> mDraw;   // draw method for the widget.
 	
 	void setParent(std::shared_ptr<ofxWidget>& p_); // set a widget's parent, this will update the children list, by calling a method over all widgets.
+
+	std::weak_ptr<ofxWidget>& getParent();
 
 	static void draw(); // draw widgets rect.
 	static void update();
