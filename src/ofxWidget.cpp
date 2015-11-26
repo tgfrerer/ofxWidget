@@ -221,7 +221,7 @@ weak_ptr<ofxWidget>& ofxWidget::getParent()
 void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 {
 	// reorders widgets, bringing the widget pointed to by the iterator it_ to the front of the widget list.
-
+	ofLog() << "reorder";
 	if (it_ == sAllWidgets.begin())
 		return;
 
@@ -382,11 +382,18 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 					if (nextFocusedWidget->mEnterFocus)
 						nextFocusedWidget->mEnterFocus();
 			}
-			if (it != sAllWidgets.begin()) {
-				ofLog() << "reorder";
-				bringToFront(it); // reorder widgets
+			if (auto w = it->lock()) {
+				// We're conservative with re-ordering.
+				// Let's move the iterator forward to see if we are actually 
+				// already sorted.
+				// If the list were already sorted, then moving back from the current
+				// iterator by the number of its children would bring us 
+				// to the beginning of sAllWidgets. Then, there is no need to re-order.
+				if (std::prev(it, w->mNumChildren) != sAllWidgets.begin()) {
+					
+					bringToFront(it); // reorder widgets
+				}
 			}
-
 		}
 	}
 
