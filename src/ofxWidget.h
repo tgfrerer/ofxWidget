@@ -41,10 +41,6 @@ The above is because the host needs to re-assign all bindings
 everytime its data address changes - and the widget has no way
 of knowing that the host address has changed.
 
-TODO: the class that has a widget should really hold this 
-widget using a unique_ptr<> since it may only hold a single
-widget.
-
 Widgets automatically register for mouse eventes
 
 When the static Wiget::draw() method is called, all wigets
@@ -62,17 +58,20 @@ If the widget has no events bound, no events will get called.
 
 ISSUES
 
+Q: Can a widget be held by an unique_ptr?
+
+A: No. The book-keeping for Widgets is internally done through
+   weak_ptr's. There is no way a weak_ptr may reference a 
+   unique_ptr, since lock() ing the weak_ptr would violate the 
+   invariant that unique_ptrs are unique.
+
 Q: How do we deal with parent widgets? Should these receive 
    user input from their children? 
 
-A: At the moment it appears as if only the front-most widget 
-   receives input, unless we are registering a mouse down, at 
-   which point the widgets are re-ordered.
-
-   This also means that a widget with children will never re-
-   ceive keyboard input, since one of its children will ne-
-   cessairily be further up front.
-
+A: No. User input is routed exclusively to the widget in focus,
+   Unless there is a "mouse down" event, which means that 
+   the focus may move to another widget.
+								 
    Children may, however, bubble user input to their parents.
 
 Q: Do we want to accelerate the hit testing for widgets any 

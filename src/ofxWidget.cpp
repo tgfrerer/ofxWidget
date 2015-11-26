@@ -9,12 +9,15 @@
 // this is a "flattened" version of our widget scene graph. 
 std::list<weak_ptr<ofxWidget>> sAllWidgets;
 
+// the widget that is in focus and will receive interactions.
+weak_ptr<ofxWidget>			   sFocusedWidget;
+
 ofVec2f ofxWidget::sLastMousePos{ 0.f,0.f };
 
 // ----------------------------------------------------------------------
 
 bool isSame(weak_ptr<ofxWidget> &lhs, weak_ptr<ofxWidget>&rhs) {
-	return (!rhs.owner_before(lhs) && !lhs.owner_before(rhs));
+	return (!lhs.expired() && !rhs.expired() && (!rhs.owner_before(lhs) && !lhs.owner_before(rhs)));
 }
 
 // ----------------------------------------------------------------------
@@ -244,11 +247,6 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 
 	*/
 
-	// first, let the first element know that it is losing focus
-	if (auto  firstElement = sAllWidgets.begin()->lock()) {
-		if (firstElement->mExitFocus)
-			firstElement->mExitFocus();
-	}
 
 	auto parent = element->mParent.lock();
 	auto elementIt = it_;
@@ -284,12 +282,6 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 			std::next(elementIt));						 // to the end of our now most senior parent element range
 	}
 
-	// now that the new wiget is at the front, send an activate callback.
-	if (auto w = sAllWidgets.front().lock()) {
-		if (w->mEnterFocus)
-			w->mEnterFocus();
-	}
-
 
 }
 
@@ -306,6 +298,7 @@ void ofxWidget::draw() {
 				p->mDraw(); // call the widget
 				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) {
 					ofPushStyle();
+					ofFill();
 					ofSetColor(ofColor::red, 64);
 					ofDrawRectangle(p->getRect());
 					ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y + 10);
@@ -321,7 +314,6 @@ void ofxWidget::draw() {
 				std::advance(it, p->mNumChildren);
 			}
 		}
-
 	}
 }
 
@@ -375,26 +367,41 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 			}
 		});
 
-		if (it != sAllWidgets.end() && it != sAllWidgets.begin()) {
-			ofLog() << "reorder";
-			bringToFront(it);
+		if (it != sAllWidgets.end()) {
+			if (!isSame(*it, sFocusedWidget)) {
+				// change in focus detected.
+				// first, let the first element know that it is losing focus
+				if (auto previousElementInFocus = sFocusedWidget.lock())
+					if (previousElementInFocus->mExitFocus)
+						previousElementInFocus->mExitFocus();
+
+				sFocusedWidget = *it;
+
+				// now that the new wiget is at the front, send an activate callback.
+				if (auto nextFocusedWidget = it->lock())
+					if (nextFocusedWidget->mEnterFocus)
+						nextFocusedWidget->mEnterFocus();
+			}
+			if (it != sAllWidgets.begin()) {
+				ofLog() << "reorder";
+				bringToFront(it); // reorder widgets
+			}
+
 		}
 	}
 
-	// now, we will attempt to send the mouse event to the first widget,
-	// but only if it happens to be under the mouse.
+	// now, we will attempt to send the mouse event to the widget that 
+	// is in focus.
 
-	// TODO: we need to remember which widget has the focus. 
-	// it can't just be the frontmost one.
+	if (auto w = sFocusedWidget.lock()) {
+		if (w->mMouseResponder)
+			w->mMouseResponder(args_);
+		// TODO: we should send a "mouse left" event if the last mousePos was inside -
+		// and a "mouse enter" event if the last mousePos was outside.
 
-	if (auto w = sAllWidgets.front().lock()) {
-		if (w->getRect().inside({ mx, my, 0.f })) {
-			if (w->mMouseResponder)
-				w->mMouseResponder(args_);
-		} else {
-			// TODO: we should send a "mouse left" event if the last mousepos was inside
-			// and a "mouse enter" event if the last mousePos was outside.
-		}
+		//if (w->getRect().inside({ mx, my, 0.f })) {
+		//} else {
+		//}
 	}
 
 	// store last mouse position last thing, so that 
@@ -408,7 +415,7 @@ void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 	if (sAllWidgets.empty()) return;
 
-	if (auto w = sAllWidgets.front().lock()) {
+	if (auto w = sFocusedWidget.lock()) {
 		if (w->mKeyResponder)
 			w->mKeyResponder(args_);
 	}
