@@ -394,6 +394,13 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 					bringToFront(it); // reorder widgets
 				}
 			}
+		} else {
+			// hit test was not successful, no wigets found.
+			if (auto previousElementInFocus = sFocusedWidget.lock())
+				if (previousElementInFocus->mExitFocus)
+					previousElementInFocus->mExitFocus();
+			
+			sFocusedWidget.reset(); // no widget gets the focus, then.
 		}
 	}
 

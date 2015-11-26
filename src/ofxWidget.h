@@ -159,10 +159,10 @@ public:
 	std::function<void(ofKeyEventArgs&)> mKeyResponder; // this method be called on mouse event
 	
 	std::function<void()> mEnterFocus;			// called when this widget gets activated
-	std::function<void()> mExitFocus;			// called when this widget gets activated
+	std::function<void()> mExitFocus;			// called when this widget gets deactivated
 
-	std::function<void()> mUpdate; // update method for the widget.
-	std::function<void()> mDraw;   // draw method for the widget.
+	std::function<void()> mUpdate; // update method for the widget.	Only called on visible widgets.
+	std::function<void()> mDraw;   // draw method for the widget. Only called on visible widgets.
 	
 	void setParent(std::shared_ptr<ofxWidget>& p_); // set a widget's parent, this will update the children list, by calling a method over all widgets.
 
