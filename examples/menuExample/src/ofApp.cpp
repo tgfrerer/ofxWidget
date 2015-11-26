@@ -3,7 +3,7 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	
-	for (int i = 2; i >= 0; --i) {
+	for (int i = 10; i >= 0; --i) {
 		auto m = make_shared<Menu>();
 		mMenus.emplace_back(m);
 		m->setRect({ 10 + i * 30.f, 10.f + i * 30, 200, 300 });

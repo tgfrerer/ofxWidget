@@ -76,7 +76,7 @@ void Menu::setup()
 			// mRemoveSelf is a function provided by the host object,
 			// which effectively decrements the shared_ptr
 			// to the current Menu, so that it might be eventually destroyed.
-			if (mRemoveSelf)
+			if (mRemoveSelf && mWiCloseButton->getRect().inside(args_))
 				mRemoveSelf(this);
 		}
 	};
