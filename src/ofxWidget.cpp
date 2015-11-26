@@ -335,7 +335,7 @@ void ofxWidget::update() {
 // ----------------------------------------------------------------------
 // static method - called once for all widgets by the
 //                 WidgetEventResponder, which self-
-//                 registers to all events upon creation.
+//                 registers to all events upon creation of the first widget.
 //
 void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 
@@ -384,7 +384,7 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 			}
 			if (auto w = it->lock()) {
 				// We're conservative with re-ordering.
-				// Let's move the iterator forward to see if we are actually 
+				// Let's move the iterator backward to see if we are actually 
 				// already sorted.
 				// If the list were already sorted, then moving back from the current
 				// iterator by the number of its children would bring us 
