@@ -56,6 +56,13 @@ If the widget has no events bound, no events will get called.
 
 -------------------------------------------------------------
 
+Widgets are stored so that the front most widget is at the front,
+all other widgets (including its parent (and its parent parent) are
+behind. parents have a numChildren count, which is cumulative, so 
+the sum total of all generations of children.
+
+-------------------------------------------------------------
+
 ISSUES
 
 Q: Can a widget be held by an unique_ptr?
@@ -87,7 +94,9 @@ A: At the moment hit testing only happens when we click, and
 Q: Is there a way to stop events form being further processed?
 
 TODO: reserach event bubbling
-	
+
+
+
 
 */
 
@@ -106,8 +115,8 @@ class WidgetEventResponder {
 	to the topmost Widget that has passed the hit test.
 
 	*/
-	void mouseEvent(ofMouseEventArgs& args);
-	void keyEvent(ofKeyEventArgs& args);
+	bool mouseEvent(ofMouseEventArgs& args);
+	bool keyEvent(ofKeyEventArgs& args);
 
 public:
 	WidgetEventResponder();
@@ -121,8 +130,8 @@ class ofxWidget
 	// we update our widgetRects.
 	friend class WidgetEventResponder;
 
-	static void mouseEvent(ofMouseEventArgs& args);
-	static void keyEvent(ofKeyEventArgs& args);
+	static bool mouseEvent(ofMouseEventArgs& args);
+	static bool keyEvent(ofKeyEventArgs& args);
 	static void bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_);
 	
 	static ofVec2f sLastMousePos;

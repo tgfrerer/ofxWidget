@@ -83,16 +83,16 @@ WidgetEventResponder::~WidgetEventResponder()
 
 // ----------------------------------------------------------------------
 
-void WidgetEventResponder::mouseEvent(ofMouseEventArgs & args_)
+bool WidgetEventResponder::mouseEvent(ofMouseEventArgs & args_)
 {
-	ofxWidget::mouseEvent(args_);
+	return ofxWidget::mouseEvent(args_);
 }
 
 // ----------------------------------------------------------------------
 
-void WidgetEventResponder::keyEvent(ofKeyEventArgs & args_)
+bool WidgetEventResponder::keyEvent(ofKeyEventArgs & args_)
 {
-	ofxWidget::keyEvent(args_);
+	return ofxWidget::keyEvent(args_);
 }
 
 // ----------------------------------------------------------------------
@@ -107,7 +107,7 @@ shared_ptr<ofxWidget> ofxWidget::make(const ofRectangle& rect_) {
 	widget->mThis = widget; // widget keeps weak store to self - will this make it leak?
 	// it should not, since we're creating the widget using new(), and not make_shared
 
-	sAllWidgets.emplace_back(widget);  // store a weak pointer to the new object in our list
+	sAllWidgets.emplace_front(widget);  // store a weak pointer to the new object in our list
 	return std::move(widget);
 }
 
@@ -337,15 +337,15 @@ void ofxWidget::update() {
 //                 WidgetEventResponder, which self-
 //                 registers to all events upon creation of the first widget.
 //
-void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
-
+bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
+	bool eventAttended = false;
 	// If we register a mouse down event, we do a hit test over
 	// all visible widgets, and re-order if necessary.
 	// Then, and in all other cases, we do a hit-test on the 
 	// frontmost widget and, if positive, forward the event to this 
 	// widget.
 
-	if (sAllWidgets.empty()) return;
+	if (sAllWidgets.empty()) return false;
 
 	// ---------| invariant: there are some widgets flying around.
 
@@ -408,8 +408,11 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// is in focus.
 
 	if (auto w = sFocusedWidget.lock()) {
-		if (w->mMouseResponder)
+		if (w->mMouseResponder) {
 			w->mMouseResponder(args_);
+			eventAttended = true;
+		}
+			
 		// TODO: we should send a "mouse left" event if the last mousePos was inside -
 		// and a "mouse enter" event if the last mousePos was outside.
 
@@ -421,19 +424,20 @@ void ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// store last mouse position last thing, so that 
 	// we are able to calculate a difference.
 	sLastMousePos.set(mx, my);
+	return eventAttended;
 }
 
 // ----------------------------------------------------------------------
 // static method - called once for any widgets
-void ofxWidget::keyEvent(ofKeyEventArgs& args_) {
+bool ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
-	if (sAllWidgets.empty()) return;
+	if (sAllWidgets.empty()) return false;
 
 	if (auto w = sFocusedWidget.lock()) {
 		if (w->mKeyResponder)
 			w->mKeyResponder(args_);
 	}
-
+	return false;
 }
 // ----------------------------------------------------------------------
 
