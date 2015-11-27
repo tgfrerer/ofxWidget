@@ -4,11 +4,18 @@
 void ofApp::setup(){
 	
 	for (int i = 10; i >= 0; --i) {
-		auto m = make_shared<Menu>();
+		string menuName = "Menu " + ofToString(i);
+		auto m = make_shared<Menu>(Menu(menuName, {
+			{ "Item 0" , "Value 0.Menu " + ofToString(i) },
+			{ "Item 1" , "Value 1.Menu " + ofToString(i) },
+			{ "Item 2" , "Value 2.Menu " + ofToString(i) },
+			{ "Item 3" , "Value 3.Menu " + ofToString(i) },
+
+		}));
+
 		mMenus.emplace_back(m);
 		m->setRect({ 10 + i * 30.f, 10.f + i * 30, 200, 300 });
-		m->setName("Menu " + ofToString(i));
-		m->setup();
+		
 		m->mRemoveSelf = [&menuList = mMenus](Menu* m_) {
 			// find a shared_ptr in our menu which corresponds to 
 			// the menu pointed to m_. If found, remove it form the
@@ -20,6 +27,12 @@ void ofApp::setup(){
 			if (it != menuList.end())
 				menuList.erase(it);
 		};
+		m->mOnItemClicked = [&menuList = mMenus](const string& value) {
+			ofLogNotice() << "Menu item clicked: " << value;
+			menuList.clear();
+		};
+		m->setup();
+
 	}
 }
 
