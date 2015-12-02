@@ -93,10 +93,11 @@ A: At the moment hit testing only happens when we click, and
 
 Q: Is there a way to stop events form being further processed?
 
-TODO: reserach event bubbling
-
-
-
+A: Yes. If the eventResponder uses the bool return type overload,
+   the return value controls whether an event will be notified 
+   further. Currently, all events that are caught by any widget
+   will not further be notified. This means, if you interact with
+   a widget, the event will only be notified on the widget.
 
 */
 
