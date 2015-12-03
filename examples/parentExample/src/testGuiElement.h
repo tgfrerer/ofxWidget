@@ -18,7 +18,7 @@ public:
 
 		mRect = { x_, y_, w_, h_ };
 		// you can assign your widget pointer here,
-		// but don't assign any widget methods like setting mDraw or the mouse responder,
+		// but don't assign any widget methods like setting onDraw or the mouse responder,
 		// since the "this" object is not fully in place right now.
 		// do these in setup, when the object is finished with initialising.
 	};
@@ -31,8 +31,8 @@ public:
 		// todo: careful with bind: if the underlaying object gets re-allocated,
 		// "this" will not point to the correct object anymore!
 
-		mWidget->mDraw = std::bind(&TestGuiElement::draw, this);
-		mWidget->mKeyResponder = std::bind(&TestGuiElement::keyResponder, this, std::placeholders::_1);
+		mWidget->onDraw = std::bind(&TestGuiElement::draw, this);
+		mWidget->onKey = std::bind(&TestGuiElement::keyResponder, this, std::placeholders::_1);
 
 		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
 
@@ -51,8 +51,8 @@ public:
 		if (auto p = mWidget->getParent().lock()) {
 			// Our widget has parent.
 			// now we need to find out if it also has a method that responds to key presses.
-			if (p->mKeyResponder) {
-				p->mKeyResponder(args_); // forward this event.
+			if (p->onKey) {
+				p->onKey(args_); // forward this event.
 			}
 		}
 	}

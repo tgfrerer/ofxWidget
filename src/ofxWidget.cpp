@@ -221,7 +221,7 @@ weak_ptr<ofxWidget>& ofxWidget::getParent()
 void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 {
 	// reorders widgets, bringing the widget pointed to by the iterator it_ to the front of the widget list.
-	ofLog() << "reorder";
+	// ofLog() << "reorder";
 	if (it_ == sAllWidgets.begin())
 		return;
 
@@ -293,9 +293,9 @@ void ofxWidget::draw() {
 	int zOrder = 0;
 	for (auto it = sAllWidgets.crbegin(); it != sAllWidgets.crend(); ++it) {
 		if (auto p = it->lock()) {
-			if (p->mDraw && p->mVisible) {
+			if (p->onDraw && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
-				p->mDraw(); // call the widget
+				p->onDraw(); // call the widget
 				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) {
 					ofPushStyle();
 					ofFill();
@@ -324,9 +324,9 @@ void ofxWidget::update() {
 	// just to stay consistent with draw order.
 	for (auto it = sAllWidgets.crbegin(); it != sAllWidgets.crend(); ++it) {
 		if (auto p = it->lock()) {
-			if (p->mUpdate && p->mVisible) {
+			if (p->onUpdate && p->mVisible) {
 				// TODO: we could set up a clip rect for the widget here...
-				p->mUpdate(); // call the widget
+				p->onUpdate(); // call the widget
 			}
 		}
 	}
@@ -372,15 +372,15 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 				// change in focus detected.
 				// first, let the first element know that it is losing focus
 				if (auto previousElementInFocus = sFocusedWidget.lock())
-					if (previousElementInFocus->mExitFocus)
-						previousElementInFocus->mExitFocus();
+					if (previousElementInFocus->onDeactivate)
+						previousElementInFocus->onDeactivate();
 
 				sFocusedWidget = *it;
 
 				// now that the new wiget is at the front, send an activate callback.
 				if (auto nextFocusedWidget = it->lock())
-					if (nextFocusedWidget->mEnterFocus)
-						nextFocusedWidget->mEnterFocus();
+					if (nextFocusedWidget->onActivate)
+						nextFocusedWidget->onActivate();
 			}
 			if (auto w = it->lock()) {
 				// We're conservative with re-ordering.
@@ -397,8 +397,8 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 		} else {
 			// hit test was not successful, no wigets found.
 			if (auto previousElementInFocus = sFocusedWidget.lock())
-				if (previousElementInFocus->mExitFocus)
-					previousElementInFocus->mExitFocus();
+				if (previousElementInFocus->onDeactivate)
+					previousElementInFocus->onDeactivate();
 			
 			sFocusedWidget.reset(); // no widget gets the focus, then.
 		}
@@ -408,8 +408,8 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// is in focus.
 
 	if (auto w = sFocusedWidget.lock()) {
-		if (w->mMouseResponder) {
-			w->mMouseResponder(args_);
+		if (w->onMouse) {
+			w->onMouse(args_);
 			eventAttended = true;
 		}
 			
@@ -434,8 +434,8 @@ bool ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 	if (sAllWidgets.empty()) return false;
 
 	if (auto w = sFocusedWidget.lock()) {
-		if (w->mKeyResponder)
-			w->mKeyResponder(args_);
+		if (w->onKey)
+			w->onKey(args_);
 	}
 	return false;
 }
@@ -443,6 +443,12 @@ bool ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 bool ofxWidget::isAtFront() {
 	return (sAllWidgets.empty()) ? false : isSame(mThis, sAllWidgets.front());
+}
+
+// ----------------------------------------------------------------------
+
+bool ofxWidget::isActivated() {
+	return (sAllWidgets.empty()) ? false : isSame(mThis, sFocusedWidget);
 }
 
 // ----------------------------------------------------------------------

@@ -99,6 +99,14 @@ A: Yes. If the eventResponder uses the bool return type overload,
    will not further be notified. This means, if you interact with
    a widget, the event will only be notified on the widget.
 
+Q: Is there a way to bubble events from child widgets to their
+   parents?
+
+A: Yes. Look at parentExample. The idea is to grab the parent,
+   And then call the parent's event responder with the current
+   event arguments. It is for the parent to decide what to do 
+   with the event.
+
 */
 
 class ofxWidget;
@@ -123,6 +131,8 @@ public:
 	WidgetEventResponder();
 	~WidgetEventResponder();
 };
+
+// -------------------------------------------------------------
 
 class ofxWidget 
 {
@@ -165,25 +175,25 @@ public:
 		return mVisible;
 	};
 
-	std::function<void(ofMouseEventArgs&)> mMouseResponder; // this method be called on mouse event
-	std::function<void(ofKeyEventArgs&)> mKeyResponder; // this method be called on mouse event
+	std::function<void(ofMouseEventArgs&)> onMouse; // this method be called on mouse event
+	std::function<void(ofKeyEventArgs&)> onKey; // this method be called on mouse event
 	
-	std::function<void()> mEnterFocus;			// called when this widget gets activated
-	std::function<void()> mExitFocus;			// called when this widget gets deactivated
+	std::function<void()> onActivate;			// called when this widget gets activated
+	std::function<void()> onDeactivate;			// called when this widget gets deactivated
 
-	std::function<void()> mUpdate; // update method for the widget.	Only called on visible widgets.
-	std::function<void()> mDraw;   // draw method for the widget. Only called on visible widgets.
+	std::function<void()> onUpdate; // update method for the widget.	Only called on visible widgets.
+	std::function<void()> onDraw;   // draw method for the widget. Only called on visible widgets.
 	
 	void setParent(std::shared_ptr<ofxWidget>& p_); // set a widget's parent, this will update the children list, by calling a method over all widgets.
 
 	std::weak_ptr<ofxWidget>& getParent();
 
-	static void draw(); // draw widgets rect.
-	static void update();
+	static void draw();			// draw all widgets
+	static void update();		// update all widgets
 
 public: // widget logic functions
-	bool isAtFront(); // returns whether this wiget is at the front (and receiving events)
-
+	bool isAtFront(); //< returns whether this widget is at the front
+	bool isActivated();  //< returns whether this widget has the focus
 public: // factory function
 	static shared_ptr<ofxWidget> make(const ofRectangle& rect_);
 

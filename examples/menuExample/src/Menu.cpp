@@ -38,7 +38,7 @@ void Menu::setup()
 	// ---------
 	// draw method for the container (that's going to be in the bg)
 	//
-	mWiMenuContainer->mDraw = [&wi = mWiMenuContainer, &name_ = mName]() {
+	mWiMenuContainer->onDraw = [&wi = mWiMenuContainer, &name_ = mName]() {
 		if (!wi) return;
 		const auto & rect = wi->getRect();
 		ofSetColor(ofColor::white);
@@ -51,12 +51,12 @@ void Menu::setup()
 		ofDrawBitmapString(name_, rect.x + 10, rect.y + 12);
 	};
 
-	mWiMenuContainer->mMouseResponder = std::bind(&Menu::mouseResponderMenuContainer, this, std::placeholders::_1);
+	mWiMenuContainer->onMouse = std::bind(&Menu::mouseResponderMenuContainer, this, std::placeholders::_1);
 
 	// ---------
 	// draw method for the close button
 	//
-	mWiCloseButton->mDraw = [&wi = mWiCloseButton]() {
+	mWiCloseButton->onDraw = [&wi = mWiCloseButton]() {
 		if (!wi) return;
 		ofFill();
 		ofSetColor(ofColor::red);
@@ -65,7 +65,7 @@ void Menu::setup()
 
 	// we define the close button responder as a lambda, because it's more 
 	// elegant.
-	mWiCloseButton->mMouseResponder = [this](ofMouseEventArgs& args_) {
+	mWiCloseButton->onMouse = [this](ofMouseEventArgs& args_) {
 		if (args_.type == ofMouseEventArgs::Released && args_.button == 0) {
 			// call an event to tell us that we should close.
 			// and that we should destroy this menu.
@@ -136,7 +136,7 @@ Menu::MenuItem::MenuItem(std::shared_ptr<ofxWidget>& parent_, std::function<void
 	mWiMenuItem->setParent(parent_);
 
 
-	mWiMenuItem->mDraw = [&rect = mWiMenuItem->getRect(), &label = mLabel]() {
+	mWiMenuItem->onDraw = [&rect = mWiMenuItem->getRect(), &label = mLabel]() {
 		ofFill();
 		ofSetColor(ofColor::gray);
 		ofDrawRectangle(rect);
@@ -147,7 +147,7 @@ Menu::MenuItem::MenuItem(std::shared_ptr<ofxWidget>& parent_, std::function<void
 	// Note that onClick is a local copy of the parameter, and is *not* captured as a reference.
 	// otherwise, this will go down very badly.
 	// the function object for onClick is captured earlier, in the constructor for MenuItem.
-	mWiMenuItem->mMouseResponder = [onClick = onClick_, &value = mValue](const ofMouseEventArgs& args_) {
+	mWiMenuItem->onMouse = [onClick = onClick_, &value = mValue](const ofMouseEventArgs& args_) {
 		if (args_.type == ofMouseEventArgs::Released && args_.button == 0) {
 			// this menu has been selected.
 			if (onClick)

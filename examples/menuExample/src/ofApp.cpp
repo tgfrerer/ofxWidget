@@ -29,7 +29,8 @@ void ofApp::setup(){
 		};
 		m->mOnItemClicked = [&menuList = mMenus](const string& value) {
 			ofLogNotice() << "Menu item clicked: " << value;
-			menuList.clear();
+			// uncomment this to remove all menus once one button has been clicked.
+			// menuList.clear();
 		};
 		m->setup();
 

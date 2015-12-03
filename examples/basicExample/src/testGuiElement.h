@@ -12,7 +12,7 @@ class TestGuiElement {
 public:
 
 	TestGuiElement() {
-		mWidget = std::move(ofxWidget::make({ (rand() % 10) * 10 + 10.f, (rand() % 10) * 10 + 10.f, 200.f, 200.f }));
+		mWidget = std::move(ofxWidget::make({ (rand() % 10) * 20 + 10.f, (rand() % 10) * 20 + 10.f, 200.f, 200.f }));
 
 		// you can assign your widget pointer here,
 		// but don't assign any widget methods like setting mDraw or the mouse responder,
@@ -24,7 +24,7 @@ public:
 
 		// tell the widget that we want to draw though it
 		// if you don't set it, the widget will not call draw
-		mWidget->mDraw = std::bind(&TestGuiElement::draw, this);
+		mWidget->onDraw = std::bind(&TestGuiElement::draw, this);
 		mColor = ofFloatColor(ofRandomuf(), ofRandomuf(), ofRandomuf());
 
 	}
