@@ -30,9 +30,10 @@ void Menu::setup()
 
 	mWiMenuContainer = ofxWidget::make({});
 	mWiCloseButton = ofxWidget::make({});
+	mWiCanvas = ofxWidget::make({});
 
 	mWiCloseButton->setParent(mWiMenuContainer);
-
+	mWiCanvas->setParent(mWiMenuContainer);
 
 
 	// ---------
@@ -78,11 +79,9 @@ void Menu::setup()
 	};
 
 	// now add menu items.
-	// this will probably blow up, since we're passing this as a reference, but 
-	// it won't be around when the thing triggers.
 
 	for (auto & itm : mItemLabelsValues) {
-		mMenuItems.emplace_back(make_shared<MenuItem>(mWiMenuContainer, mOnItemClicked, itm.first, itm.second));
+		mMenuItems.emplace_back(make_shared<MenuItem>(mWiCanvas, mOnItemClicked, itm.first, itm.second));
 	}
 
 	calculateRects();
@@ -104,6 +103,9 @@ void Menu::mouseResponderMenuContainer(const ofMouseEventArgs& args_) {
 		mRect.y += delta.y;
 		mLastMouseDown = args_;
 		calculateRects();
+	} else if (args_.type == ofMouseEventArgs::Pressed && args_.button == 2) {
+		// this should hide all the buttons with the canvas.
+		mWiCanvas->setVisibility(mWiCanvas->getVisibility()^1);
 	}
 
 }
@@ -115,6 +117,7 @@ void Menu::calculateRects() {
 	if (!mWiMenuContainer) return;
 
 	mWiMenuContainer->setRect(mRect);
+	mWiCanvas->setRect({ mRect.x+10, mRect.y + 30.f, mRect.width-20, mRect.height - 30.f });
 	mWiCloseButton->setRect({ mRect.x + mRect.width - 20, mRect.y, 20.f, 20.f });
 
 	int i = 0;
@@ -134,7 +137,6 @@ Menu::MenuItem::MenuItem(std::shared_ptr<ofxWidget>& parent_, std::function<void
 {
 	mWiMenuItem = ofxWidget::make({});
 	mWiMenuItem->setParent(parent_);
-
 
 	mWiMenuItem->onDraw = [&rect = mWiMenuItem->getRect(), &label = mLabel]() {
 		ofFill();
