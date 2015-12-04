@@ -56,9 +56,15 @@ If the widget has no events bound, no events will get called.
 
 -------------------------------------------------------------
 
+INTERNAL WIDGET LIST STORE SYSTEM (`sAllWidgets`)
+
+| w0.1 | w0.2 | w0 | w1.0 | w1.1 | w1 | w | ...
+\__________________|\_________________|	  |
+\_________________________________________|
+
 Widgets are stored so that the front most widget is at the front,
 all other widgets (including its parent (and its parent parent) are
-behind. parents have a numChildren count, which is cumulative, so 
+behind. Widgets have a numChildren count, which is cumulative, so 
 the sum total of all generations of children.
 
 -------------------------------------------------------------
@@ -144,7 +150,9 @@ class ofxWidget
 	static bool mouseEvent(ofMouseEventArgs& args);
 	static bool keyEvent(ofKeyEventArgs& args);
 	static void bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_);
-	
+	static void updateVisibleWidgetsList();
+	static bool bVisibleListDirty;
+
 	static ofVec2f sLastMousePos;
 
 	ofxWidget();
@@ -186,7 +194,9 @@ public:
 	
 	void setParent(std::shared_ptr<ofxWidget>& p_); // set a widget's parent, this will update the children list, by calling a method over all widgets.
 
-	std::weak_ptr<ofxWidget>& getParent();
+	std::weak_ptr<ofxWidget>& getParent() {
+		return mParent;
+	};
 
 	static void draw();			// draw all widgets
 	static void update();		// update all widgets

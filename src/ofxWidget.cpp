@@ -9,6 +9,10 @@
 // this is a "flattened" version of our widget scene graph. 
 std::list<weak_ptr<ofxWidget>> sAllWidgets;
 
+// a list of visible widgets
+list<weak_ptr<ofxWidget>>	   sVisibleWidgets;
+bool ofxWidget::bVisibleListDirty = true; // whether the cache needs to be re-built upon update.
+
 // the widget that is in focus and will receive interactions.
 weak_ptr<ofxWidget>			   sFocusedWidget;
 
@@ -37,7 +41,6 @@ auto findIt(shared_ptr<ofxWidget>& needle_) {
 	weak_ptr<ofxWidget> wkP = needle_;
 	return findIt(wkP);
 }
-
 
 // ----------------------------------------------------------------------
 
@@ -108,6 +111,7 @@ shared_ptr<ofxWidget> ofxWidget::make(const ofRectangle& rect_) {
 	// it should not, since we're creating the widget using new(), and not make_shared
 
 	sAllWidgets.emplace_front(widget);  // store a weak pointer to the new object in our list
+	ofxWidget::bVisibleListDirty = true;
 	return std::move(widget);
 }
 
@@ -148,31 +152,25 @@ ofxWidget::~ofxWidget() {
 				parent->mNumChildren -= (mNumChildren + 1);
 			}
 		};
-
+		ofxWidget::bVisibleListDirty = true;
 	} // end if (it != sAllWidgets.end()) 
-
 }
 
 // ----------------------------------------------------------------------
 
 void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 {
-
 	if (auto p = mParent.lock()) {
-
 		// TODO: 
-
 		// how weird! this widget has a parent already.
 		// delete the widgets from the parent's child list
-		ofLogWarning() << "Widget has parent already!";
+		ofLogWarning() << "Widget already has parent!";
 		return;
 	}
 
 	// find ourselves in widget list
 	auto itMe = findIt(mThis);
-
 	// find parent in widget list
-
 	auto itParent = findIt(p_);
 
 	/*
@@ -203,17 +201,36 @@ void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 				// travel up parent hierarchy and increase child count for all ancestors
 				parent->mNumChildren += (1 + mNumChildren);
 			}
-
 		}
 	}
 
+	ofxWidget::bVisibleListDirty = true;
 }
 
 // ----------------------------------------------------------------------
 
-weak_ptr<ofxWidget>& ofxWidget::getParent()
-{
-	return mParent;
+void ofxWidget::updateVisibleWidgetsList() {
+	
+	if (!ofxWidget::bVisibleListDirty) 
+		return;
+
+	ofLogNotice() << "vList Update cache miss";
+
+	// build a list of visible widgets based on all widgets
+	// TODO: only rebuild this list if visiblility list on adding/removing and 
+	// parenting widgets, and on changing widget visiblity, of course.
+	sVisibleWidgets.clear();
+
+	for (auto it = sAllWidgets.crbegin(); it != sAllWidgets.crend(); ++it) {
+		if (auto p = it->lock()) {
+			if (p->mVisible) {
+				sVisibleWidgets.emplace_front(*it);
+			} else {
+				std::advance(it, p->mNumChildren);
+			}
+		}
+	}
+	ofxWidget::bVisibleListDirty = false;
 }
 
 // ----------------------------------------------------------------------
@@ -221,7 +238,7 @@ weak_ptr<ofxWidget>& ofxWidget::getParent()
 void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 {
 	// reorders widgets, bringing the widget pointed to by the iterator it_ to the front of the widget list.
-	// ofLog() << "reorder";
+	ofLog() << "reorder";
 	if (it_ == sAllWidgets.begin())
 		return;
 
@@ -235,18 +252,18 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 	// ---------| invariant: element is valid
 
 	/*
-
 	Algorithm:
 
-	recursively: while current object range has a parent, put current object range to the front of parent range
-	make parent range current object range. repeat until there is no parent range.
+	while current object range has a parent, put current object
+	range to the front of parent range make parent range current
+	object range.
 
-	as soon as there is no parent anymore, put last object range to the front of the list
+	As soon as there is no parent anymore, put last object range
+	to the front of the list
 
-	Heuristic: parent iterator's position always to be found after current iterator.
-
+	Heuristic: parent iterator's position always to be found
+	after current iterator.
 	*/
-
 
 	auto parent = element->mParent.lock();
 	auto elementIt = it_;
@@ -282,7 +299,7 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 			std::next(elementIt));						 // to the end of our now most senior parent element range
 	}
 
-
+	ofxWidget::bVisibleListDirty = true;
 }
 
 // ----------------------------------------------------------------------
@@ -291,10 +308,10 @@ void ofxWidget::draw() {
 	// make sure to draw last to first,
 	// since we don't do z-testing.
 	int zOrder = 0;
-	for (auto it = sAllWidgets.crbegin(); it != sAllWidgets.crend(); ++it) {
+	updateVisibleWidgetsList();
+	for (auto it = sVisibleWidgets.crbegin(); it != sVisibleWidgets.crend(); ++it) {
 		if (auto p = it->lock()) {
-			if (p->onDraw && p->mVisible) {
-				// TODO: we could set up a clip rect for the widget here...
+			if (p->onDraw) {
 				p->onDraw(); // call the widget
 				if (ofGetKeyPressed(OF_KEY_RIGHT_CONTROL)) {
 					ofPushStyle();
@@ -302,16 +319,9 @@ void ofxWidget::draw() {
 					ofSetColor(ofColor::red, 64);
 					ofDrawRectangle(p->getRect());
 					ofDrawBitmapStringHighlight(ofToString(zOrder), p->mRect.x, p->mRect.y + 10);
-
 					ofPopStyle();
 				}
 				zOrder++;
-			} else {
-				// we can jump ahead by the number of children,
-				// since if a parent layer is invisible, 
-				// this means that its children must be 
-				// invisible, too.
-				std::advance(it, p->mNumChildren);
 			}
 		}
 	}
@@ -320,14 +330,13 @@ void ofxWidget::draw() {
 // ----------------------------------------------------------------------
 
 void ofxWidget::update() {
+	updateVisibleWidgetsList();
 	// make sure to update last to first,
 	// just to stay consistent with draw order.
-	for (auto it = sAllWidgets.crbegin(); it != sAllWidgets.crend(); ++it) {
+	for (auto it = sVisibleWidgets.crbegin(); it != sVisibleWidgets.crend(); ++it) {
 		if (auto p = it->lock()) {
-			if (p->onUpdate && p->mVisible) {
-				// TODO: we could set up a clip rect for the widget here...
+			if (p->onUpdate)
 				p->onUpdate(); // call the widget
-			}
 		}
 	}
 }
@@ -338,27 +347,35 @@ void ofxWidget::update() {
 //                 registers to all events upon creation of the first widget.
 //
 bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
-	bool eventAttended = false;
 	// If we register a mouse down event, we do a hit test over
 	// all visible widgets, and re-order if necessary.
 	// Then, and in all other cases, we do a hit-test on the 
 	// frontmost widget and, if positive, forward the event to this 
 	// widget.
 
-	if (sAllWidgets.empty()) return false;
+	updateVisibleWidgetsList();
 
+	if (sVisibleWidgets.empty()) return false;
+	
 	// ---------| invariant: there are some widgets flying around.
+
+	bool eventAttended = false;
 
 	float mx = args_.x;
 	float my = args_.y;
 
-	// if we have a mouse down, we re-order widgets.
+	// if we have a mouse down on a widget, we need to check which 
+	// widget was hit and potentially re-order widgets.
 
 	// if we have a click, we want to make sure the widget gets to be the topmost widget.
 	if (args_.type == ofMouseEventArgs::Pressed) {
 
 		// find the first widget that is under the mouse, that is also visible
-		auto it = std::find_if(sAllWidgets.begin(), sAllWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
+		// if it is not yet up front, bring it to the front.
+
+		// hit-test only visible widgets - this makes sure to only evaluate 
+		// the widgets which are visible, and whose parents are visible, too.
+		auto it = std::find_if(sVisibleWidgets.begin(), sVisibleWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
 			auto p = w.lock();
 			if (p && p->mVisible && p->mRect.inside(mx, my)) {
 				return true;
@@ -366,6 +383,13 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 				return false;
 			}
 		});
+
+		// --- now point it back to sAllWidgets.
+		// we need to do this, because otherwise the reorder check won't be safe 
+		// as the number of children in tmpVisibleWidgets is potentially incorrect,
+		// as the number of children there refers to all children of a widget,
+		// and not just the visible children of the widget.
+		it = it == sVisibleWidgets.end() ? sAllWidgets.end() : findIt(*it);
 
 		if (it != sAllWidgets.end()) {
 			if (!isSame(*it, sFocusedWidget)) {
@@ -390,7 +414,6 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 				// iterator by the number of its children would bring us 
 				// to the beginning of sAllWidgets. Then, there is no need to re-order.
 				if (std::prev(it, w->mNumChildren) != sAllWidgets.begin()) {
-					
 					bringToFront(it); // reorder widgets
 				}
 			}
@@ -399,10 +422,10 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 			if (auto previousElementInFocus = sFocusedWidget.lock())
 				if (previousElementInFocus->onDeactivate)
 					previousElementInFocus->onDeactivate();
-			
+
 			sFocusedWidget.reset(); // no widget gets the focus, then.
 		}
-	}
+	} // end if (args_.type == ofMouseEventArgs::Pressed)
 
 	// now, we will attempt to send the mouse event to the widget that 
 	// is in focus.
@@ -412,7 +435,7 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 			w->onMouse(args_);
 			eventAttended = true;
 		}
-			
+
 		// TODO: we should send a "mouse left" event if the last mousePos was inside -
 		// and a "mouse enter" event if the last mousePos was outside.
 
