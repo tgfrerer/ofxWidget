@@ -64,7 +64,7 @@ WidgetEventResponder::WidgetEventResponder()
 	ofAddListener(ofEvents().keyPressed, listener, &WidgetEventResponder::keyEvent, prio);
 	ofAddListener(ofEvents().keyReleased, listener, &WidgetEventResponder::keyEvent, prio);
 
-	ofLogNotice() << "adding widget listener";
+	ofLogVerbose() << "adding widget listener";
 }
 // ----------------------------------------------------------------------
 
@@ -216,7 +216,7 @@ void ofxWidget::updateVisibleWidgetsList() {
 	if (!ofxWidget::bVisibleListDirty)
 		return;
 
-	ofLogNotice() << "vList Update cache miss";
+	//ofLogNotice() << "vList Update cache miss";
 
 	// build a list of visible widgets based on all widgets
 	// TODO: only rebuild this list if visiblility list on adding/removing and 
@@ -240,7 +240,7 @@ void ofxWidget::updateVisibleWidgetsList() {
 void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 {
 	// reorders widgets, bringing the widget pointed to by the iterator it_ to the front of the widget list.
-	ofLog() << "reorder";
+	//ofLog() << "reorder";
 	if (it_ == sAllWidgets.begin())
 		return;
 
