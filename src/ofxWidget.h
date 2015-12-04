@@ -177,7 +177,10 @@ public:
 	};
 
 	void setVisibility(bool visible_) {
+		if (visible_ != mVisible)
+			bVisibleListDirty = true;
 		mVisible = visible_;
+		
 	}
 
 	const bool getVisibility() const {
