@@ -159,6 +159,7 @@ class ofxWidget
 	ofRectangle mRect; // widget rect on screen
 
 	bool mVisible = true; // layer visiblity
+	bool mHover = false;  // mouse-over detected?
 
 	size_t mNumChildren = 0;	 // number of children for this widget.
 	std::weak_ptr<ofxWidget> mParent; // parent widget for this.
@@ -183,11 +184,17 @@ public:
 		return mVisible;
 	};
 
+	const bool getHover() const {
+		return mHover;
+	}
+
 	std::function<void(ofMouseEventArgs&)> onMouse; // this method be called on mouse event
 	std::function<void(ofKeyEventArgs&)> onKey; // this method be called on mouse event
 	
 	std::function<void()> onActivate;			// called when this widget gets activated
 	std::function<void()> onDeactivate;			// called when this widget gets deactivated
+	std::function<void()> onMouseEnter;			// called when mouse enters this widget
+	std::function<void()> onMouseLeave;			// called when mouse exits  this widget
 
 	std::function<void()> onUpdate; // update method for the widget.	Only called on visible widgets.
 	std::function<void()> onDraw;   // draw method for the widget. Only called on visible widgets.

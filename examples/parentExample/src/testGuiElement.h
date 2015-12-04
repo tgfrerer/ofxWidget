@@ -66,6 +66,13 @@ public:
 		ofPushStyle();
 		ofSetColor(mColor);
 		ofDrawRectangle(mWidget->getRect());
+		
+		if (mWidget->getHover()) {
+			ofNoFill();
+			ofSetLineWidth(2);
+			ofSetColor(ofColor::black);
+			ofDrawRectangle(mWidget->getRect());
+		}
 		ofPopStyle();
 	
 	};

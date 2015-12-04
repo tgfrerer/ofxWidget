@@ -15,6 +15,8 @@ bool ofxWidget::bVisibleListDirty = true; // whether the cache needs to be re-bu
 
 // the widget that is in focus and will receive interactions.
 weak_ptr<ofxWidget>			   sFocusedWidget;
+weak_ptr<ofxWidget>			   sWidgetUnderMouse;
+
 
 ofVec2f ofxWidget::sLastMousePos{ 0.f,0.f };
 
@@ -210,8 +212,8 @@ void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 // ----------------------------------------------------------------------
 
 void ofxWidget::updateVisibleWidgetsList() {
-	
-	if (!ofxWidget::bVisibleListDirty) 
+
+	if (!ofxWidget::bVisibleListDirty)
 		return;
 
 	ofLogNotice() << "vList Update cache miss";
@@ -356,7 +358,7 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	updateVisibleWidgetsList();
 
 	if (sVisibleWidgets.empty()) return false;
-	
+
 	// ---------| invariant: there are some widgets flying around.
 
 	bool eventAttended = false;
@@ -367,54 +369,54 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// if we have a mouse down on a widget, we need to check which 
 	// widget was hit and potentially re-order widgets.
 
+	// find the first widget that is under the mouse, that is also visible
+	// if it is not yet up front, bring it to the front.
+
+	// hit-test only visible widgets - this makes sure to only evaluate 
+	// the widgets which are visible, and whose parents are visible, too.
+	auto itUnderMouse = std::find_if(sVisibleWidgets.begin(), sVisibleWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
+		auto p = w.lock();
+		if (p && p->mVisible && p->mRect.inside(mx, my)) {
+			return true;
+		} else {
+			return false;
+		}
+	});
+
 	// if we have a click, we want to make sure the widget gets to be the topmost widget.
 	if (args_.type == ofMouseEventArgs::Pressed) {
-
-		// find the first widget that is under the mouse, that is also visible
-		// if it is not yet up front, bring it to the front.
-
-		// hit-test only visible widgets - this makes sure to only evaluate 
-		// the widgets which are visible, and whose parents are visible, too.
-		auto it = std::find_if(sVisibleWidgets.begin(), sVisibleWidgets.end(), [&mx, &my](std::weak_ptr<ofxWidget>& w) ->bool {
-			auto p = w.lock();
-			if (p && p->mVisible && p->mRect.inside(mx, my)) {
-				return true;
-			} else {
-				return false;
-			}
-		});
 
 		// --- now point it back to sAllWidgets.
 		// we need to do this, because otherwise the reorder check won't be safe 
 		// as the number of children in tmpVisibleWidgets is potentially incorrect,
 		// as the number of children there refers to all children of a widget,
 		// and not just the visible children of the widget.
-		it = it == sVisibleWidgets.end() ? sAllWidgets.end() : findIt(*it);
+		auto itAll = (itUnderMouse == sVisibleWidgets.end() ? sAllWidgets.end() : findIt(*itUnderMouse));
 
-		if (it != sAllWidgets.end()) {
-			if (!isSame(*it, sFocusedWidget)) {
+		if (itAll != sAllWidgets.end()) {
+			if (!isSame(*itAll, sFocusedWidget)) {
 				// change in focus detected.
 				// first, let the first element know that it is losing focus
 				if (auto previousElementInFocus = sFocusedWidget.lock())
 					if (previousElementInFocus->onDeactivate)
 						previousElementInFocus->onDeactivate();
 
-				sFocusedWidget = *it;
+				sFocusedWidget = *itAll;
 
 				// now that the new wiget is at the front, send an activate callback.
-				if (auto nextFocusedWidget = it->lock())
+				if (auto nextFocusedWidget = itAll->lock())
 					if (nextFocusedWidget->onActivate)
 						nextFocusedWidget->onActivate();
 			}
-			if (auto w = it->lock()) {
+			if (auto w = itAll->lock()) {
 				// We're conservative with re-ordering.
 				// Let's move the iterator backward to see if we are actually 
 				// already sorted.
 				// If the list were already sorted, then moving back from the current
 				// iterator by the number of its children would bring us 
 				// to the beginning of sAllWidgets. Then, there is no need to re-order.
-				if (std::prev(it, w->mNumChildren) != sAllWidgets.begin()) {
-					bringToFront(it); // reorder widgets
+				if (std::prev(itAll, w->mNumChildren) != sAllWidgets.begin()) {
+					bringToFront(itAll); // reorder widgets
 				}
 			}
 		} else {
@@ -430,18 +432,41 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// now, we will attempt to send the mouse event to the widget that 
 	// is in focus.
 
+	if (itUnderMouse != sVisibleWidgets.end()) {
+			// a widget is under the mouse.
+			// is it the same as the current widget under the mouse?
+		if (!isSame(*itUnderMouse, sWidgetUnderMouse)) {
+			if (auto nU = itUnderMouse->lock())
+			{
+				// there is a new widget under the mouse
+				if (auto w = sWidgetUnderMouse.lock()) {
+					// there was an old widget under the mouse
+					if (w->onMouseLeave)
+						w->onMouseLeave();
+					w->mHover = false;
+				}
+				if (nU->onMouseEnter)
+					nU->onMouseEnter();
+				nU->mHover = true;
+				sWidgetUnderMouse = *itUnderMouse;
+			}
+		}
+	} else {
+		if (auto w = sWidgetUnderMouse.lock()) {
+			// there was a widget under mouse,
+			// but now there is none.
+			if (w->onMouseLeave)
+				w->onMouseLeave();
+			w->mHover = false;
+			sWidgetUnderMouse.reset();
+		}
+	}
+
 	if (auto w = sFocusedWidget.lock()) {
 		if (w->onMouse) {
 			w->onMouse(args_);
 			eventAttended = true;
 		}
-
-		// TODO: we should send a "mouse left" event if the last mousePos was inside -
-		// and a "mouse enter" event if the last mousePos was outside.
-
-		//if (w->getRect().inside({ mx, my, 0.f })) {
-		//} else {
-		//}
 	}
 
 	// store last mouse position last thing, so that 
