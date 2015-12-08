@@ -27,9 +27,11 @@ bool isSame(weak_ptr<ofxWidget> &lhs, weak_ptr<ofxWidget>&rhs) {
 
 // ----------------------------------------------------------------------
 
-auto findIt(weak_ptr<ofxWidget>& needle_, list<weak_ptr<ofxWidget>>::iterator start_ = sAllWidgets.begin()) {
+auto findIt(weak_ptr<ofxWidget>& needle_, 
+	list<weak_ptr<ofxWidget>>::iterator start_,
+	list<weak_ptr<ofxWidget>>::iterator end_) {
 	// find needle in widget list haystack
-	return find_if(start_, sAllWidgets.end(), [needle = needle_](weak_ptr<ofxWidget>&w) {
+	return find_if(start_, end_, [needle = needle_](weak_ptr<ofxWidget>&w) {
 		// finds if it two shared ptrs are the same.
 		return (!w.owner_before(needle) && !needle.owner_before(w));
 	});
@@ -37,11 +39,11 @@ auto findIt(weak_ptr<ofxWidget>& needle_, list<weak_ptr<ofxWidget>>::iterator st
 
 // ----------------------------------------------------------------------
 
-auto findIt(shared_ptr<ofxWidget>& needle_) {
-	// find needle in widget list haystack
-	weak_ptr<ofxWidget> wkP = needle_;
-	return findIt(wkP);
-}
+//auto findIt(shared_ptr<ofxWidget>& needle_) {
+//	// find needle in widget list haystack
+//	weak_ptr<ofxWidget> wkP = needle_;
+//	return findIt(wkP, sAllWidgets.begin(), sAllWidgets.end());
+//}
 
 // ----------------------------------------------------------------------
 
@@ -135,7 +137,7 @@ ofxWidget::~ofxWidget() {
 	// in the list of sAllWidgets, and we won't delete
 	// anything from that list.
 
-	auto it = findIt(mThis);
+	auto it = findIt(mThis, sAllWidgets.begin(),sAllWidgets.end());
 
 	if (it != sAllWidgets.end()) {
 
@@ -170,9 +172,10 @@ void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 	}
 
 	// find ourselves in widget list
-	auto itMe = findIt(mThis);
+	auto itMe = findIt(mThis, sAllWidgets.begin(), sAllWidgets.end());
 	// find parent in widget list
-	auto itParent = findIt(p_);
+	weak_ptr<ofxWidget> tmpParent = p_;
+	auto itParent = findIt(tmpParent, sAllWidgets.begin(), sAllWidgets.end());
 
 	/*
 
@@ -271,7 +274,7 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 
 	while (parent) {
 
-		auto itParent = findIt(element->mParent, std::next(elementIt)); // start our search for parent after current element.
+		auto itParent = findIt(element->mParent, std::next(elementIt), sAllWidgets.end()); // start our search for parent after current element.
 
 		// if element has parent, bring element range to front of parent range.
 		if (std::prev(elementIt, element->mNumChildren) != std::prev(itParent, parent->mNumChildren)) {
@@ -389,7 +392,9 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 		// as the number of children in sVisibleWidgets is potentially incorrect,
 		// as the number of children there refers to all children of a widget,
 		// and not just the visible children of the widget.
-		auto itAll = (itUnderMouse == sVisibleWidgets.end() ? sAllWidgets.end() : findIt(*itUnderMouse));
+		auto itAll = (itUnderMouse == sVisibleWidgets.end() ? 
+			sAllWidgets.end() : 
+			findIt(*itUnderMouse, sAllWidgets.begin(), sAllWidgets.end()));
 
 		if (itAll != sAllWidgets.end()) {
 			if (!isSame(*itAll, sFocusedWidget)) {
@@ -474,7 +479,7 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 }
 
 // ----------------------------------------------------------------------
-// static method - called once for any widgets
+// static method - called once on the widget having the focus
 bool ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 
 	if (sAllWidgets.empty()) return false;
@@ -495,6 +500,33 @@ bool ofxWidget::isAtFront() {
 
 bool ofxWidget::isActivated() {
 	return (sAllWidgets.empty()) ? false : isSame(mThis, sFocusedWidget);
+}
+
+// ----------------------------------------------------------------------
+
+void ofxWidget::moveBy(const ofVec2f & delta_) {
+
+	// find the iterator to the current widget
+
+	auto it = findIt(mThis, sAllWidgets.begin(), sAllWidgets.end());
+	auto rIt = std::reverse_iterator<decltype(it)>(it); // make a reverse iterator out of it.
+
+	mRect.position += delta_;
+
+	// all children (if any) are lined up physically before in sAllWidgets.
+	// we're using a reverse iterator so that we don't get a problem 
+	// at the very physically first element.
+	for (int i = 0; i < mNumChildren && rIt != sAllWidgets.rend(); i++, rIt++) {
+		if (auto w = rIt->lock()) {
+			w->mRect.position += delta_;
+		}
+	}
+}
+
+// ----------------------------------------------------------------------
+
+void ofxWidget::moveTo(const ofVec2f& pos_) {
+	moveBy(pos_ - mRect.position);
 }
 
 // ----------------------------------------------------------------------

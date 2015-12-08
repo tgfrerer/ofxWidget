@@ -172,17 +172,18 @@ public:
 		return mRect;
 	};
 
-	// set the rect for a widget
-	// TODO: should this be applied recursively to all child widgets?
+	// set the rect for a widget. absolute coordinates.
 	void setRect(const ofRectangle& rect_) {
 		mRect = rect_;
 	};
+
+	void moveBy(const ofVec2f& delta_); //< Move this widget (and any children) by an offset
+	void moveTo(const ofVec2f& pos_);
 
 	void setVisibility(bool visible_) {
 		if (visible_ != mVisible)
 			bVisibleListDirty = true;
 		mVisible = visible_;
-		
 	}
 
 	const bool getVisibility() const {
