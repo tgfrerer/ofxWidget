@@ -18,6 +18,7 @@ class Menu
 			std::function<void(const std::string& value)>& onClick_,
 			const std::string& label_, 
 			const std::string& value_);
+
 		void setRect(const ofRectangle& rect_);
 		
 	};

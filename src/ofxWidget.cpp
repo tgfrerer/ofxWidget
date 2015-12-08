@@ -17,7 +17,6 @@ bool ofxWidget::bVisibleListDirty = true; // whether the cache needs to be re-bu
 weak_ptr<ofxWidget>			   sFocusedWidget;
 weak_ptr<ofxWidget>			   sWidgetUnderMouse;
 
-
 ofVec2f ofxWidget::sLastMousePos{ 0.f,0.f };
 
 // ----------------------------------------------------------------------
@@ -307,8 +306,7 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 // ----------------------------------------------------------------------
 
 void ofxWidget::draw() {
-	// make sure to draw last to first,
-	// since we don't do z-testing.
+	// make sure to draw last to first == back to front.
 	int zOrder = 0;
 	updateVisibleWidgetsList();
 	for (auto it = sVisibleWidgets.crbegin(); it != sVisibleWidgets.crend(); ++it) {
@@ -386,9 +384,9 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 	// if we have a click, we want to make sure the widget gets to be the topmost widget.
 	if (args_.type == ofMouseEventArgs::Pressed) {
 
-		// --- now point it back to sAllWidgets.
+		// --- now iterate over sAllWidgets instead of just the visible widgets.
 		// we need to do this, because otherwise the reorder check won't be safe 
-		// as the number of children in tmpVisibleWidgets is potentially incorrect,
+		// as the number of children in sVisibleWidgets is potentially incorrect,
 		// as the number of children there refers to all children of a widget,
 		// and not just the visible children of the widget.
 		auto itAll = (itUnderMouse == sVisibleWidgets.end() ? sAllWidgets.end() : findIt(*itUnderMouse));

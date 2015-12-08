@@ -52,7 +52,6 @@ void Menu::setup()
 		ofDrawBitmapString(name_, rect.x + 10, rect.y + 12);
 	};
 
-	mWiMenuContainer->onMouse = std::bind(&Menu::mouseResponderMenuContainer, this, std::placeholders::_1);
 
 	// ---------
 	// draw method for the close button
@@ -64,6 +63,7 @@ void Menu::setup()
 		ofDrawRectangle(wi->getRect());
 	};
 
+	mWiMenuContainer->onMouse = std::bind(&Menu::mouseResponderMenuContainer, this, std::placeholders::_1);
 	// we define the close button responder as a lambda, because it's more 
 	// elegant.
 	mWiCloseButton->onMouse = [this](ofMouseEventArgs& args_) {
@@ -73,8 +73,10 @@ void Menu::setup()
 			// mRemoveSelf is a function provided by the host object,
 			// which effectively decrements the shared_ptr
 			// to the current Menu, so that it might be eventually destroyed.
-			if (mRemoveSelf && mWiCloseButton->getRect().inside(args_))
+			if (mRemoveSelf && mWiCloseButton->getRect().inside(args_)) {
 				mRemoveSelf(this);
+				return; // after we called removeSelf, we must assume this object is invalid.
+			}
 		}
 	};
 

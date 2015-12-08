@@ -172,6 +172,8 @@ public:
 		return mRect;
 	};
 
+	// set the rect for a widget
+	// TODO: should this be applied recursively to all child widgets?
 	void setRect(const ofRectangle& rect_) {
 		mRect = rect_;
 	};
