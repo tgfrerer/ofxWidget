@@ -10,8 +10,6 @@ class ofApp : public ofBaseApp{
 
 	public:
 	
-		void removeMenu(Menu* m_);
-		
 		void setup();
 		void update();
 		void draw();

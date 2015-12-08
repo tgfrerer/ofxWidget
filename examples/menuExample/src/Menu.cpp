@@ -12,6 +12,8 @@ Menu::Menu(const string& name_, const std::map<std::string, std::string>& itemsL
 	ofLogNotice() << "created menu";
 }
 
+
+
 Menu::~Menu() {
 	ofLogNotice() << "destroyed menu";
 }
@@ -60,7 +62,9 @@ void Menu::setup()
 		if (!wi) return;
 		ofFill();
 		ofSetColor(ofColor::red);
-		ofDrawRectangle(wi->getRect());
+		const auto & rect = wi->getRect();
+		ofVec2f circleOrigin(rect.width*0.5, rect.height*0.5);
+		ofDrawCircle(rect.position + circleOrigin, rect.width*0.50*.75);
 	};
 
 	mWiMenuContainer->onMouse = std::bind(&Menu::mouseResponderMenuContainer, this, std::placeholders::_1);
@@ -86,7 +90,17 @@ void Menu::setup()
 		mMenuItems.emplace_back(make_shared<MenuItem>(mWiCanvas, mOnItemClicked, itm.first, itm.second));
 	}
 
-	calculateRects();
+	// now do the layout.
+
+	mWiMenuContainer->setRect(mRect);
+	mWiCanvas->setRect({ mRect.x + 10, mRect.y + 30.f, mRect.width - 20, mRect.height - 30.f });
+	mWiCloseButton->setRect({ mRect.x + mRect.width - 20, mRect.y, 20.f, 20.f });
+
+	int i = 0;
+	for (auto &m : mMenuItems) {
+		m->setRect({ mRect.x + 10, mRect.y + 30 + (20 + 5) * i, mRect.width - 20, 20 });
+		++i;
+	}
 }
 
 // ---------------------------------------------------------------
@@ -101,33 +115,12 @@ void Menu::mouseResponderMenuContainer(const ofMouseEventArgs& args_) {
 		// now we have to calculate the delta to the last 
 		// mouse pos, and signal that the rect needs to be recalculated.
 		auto delta = args_ - mLastMouseDown;
-		mRect.x += delta.x;
-		mRect.y += delta.y;
 		mLastMouseDown = args_;
-		calculateRects();
+		mWiMenuContainer->moveBy(delta);
 	} else if (args_.type == ofMouseEventArgs::Pressed && args_.button == 2) {
 		// this should hide all the buttons with the canvas.
 		mWiCanvas->setVisibility(mWiCanvas->getVisibility()^1);
 	}
-
-}
-
-
-// ---------------------------------------------------------------
-
-void Menu::calculateRects() {
-	if (!mWiMenuContainer) return;
-
-	mWiMenuContainer->setRect(mRect);
-	mWiCanvas->setRect({ mRect.x+10, mRect.y + 30.f, mRect.width-20, mRect.height - 30.f });
-	mWiCloseButton->setRect({ mRect.x + mRect.width - 20, mRect.y, 20.f, 20.f });
-
-	int i = 0;
-	for (auto &m : mMenuItems) {
-		m->setRect({ mRect.x + 10, mRect.y + 30 + (20 + 5) * i, mRect.width - 20, 20 });
-		++i;
-	}
-
 }
 
 // ---------------------------------------------------------------

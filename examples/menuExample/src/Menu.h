@@ -6,6 +6,7 @@
 
 class Menu
 {
+	// inner class. we don't want to make this visible.
 	class MenuItem {
 		std::shared_ptr<ofxWidget> mWiMenuItem;
 		std::string mLabel;
@@ -35,11 +36,12 @@ class Menu
 	ofRectangle mRect;
 
 
-	Menu() = delete;
+	
 
 public:
 
 	Menu(const std::string& name_, const std::map<std::string, std::string>& itemLabelsValues_);
+	
 	~Menu();
 
 	void setRect(const ofRectangle &rect_);
@@ -58,7 +60,7 @@ public:
 private:
 	bool mRectsDirty = true;
 	void mouseResponderMenuContainer(const ofMouseEventArgs& args_);
-	void calculateRects();
+	
 	ofVec2f mLastMouseDown;
 	std::list<std::shared_ptr<MenuItem>> mMenuItems;
 
