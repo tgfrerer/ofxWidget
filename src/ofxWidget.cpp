@@ -21,15 +21,15 @@ ofVec2f ofxWidget::sLastMousePos{ 0.f,0.f };
 
 // ----------------------------------------------------------------------
 
-bool isSame(weak_ptr<ofxWidget> &lhs, weak_ptr<ofxWidget>&rhs) {
+bool isSame(const weak_ptr<ofxWidget> &lhs, const weak_ptr<ofxWidget>&rhs) {
 	return (!lhs.expired() && !rhs.expired() && (!rhs.owner_before(lhs) && !lhs.owner_before(rhs)));
 }
 
 // ----------------------------------------------------------------------
 
-auto findIt(weak_ptr<ofxWidget>& needle_, 
-	list<weak_ptr<ofxWidget>>::iterator start_,
-	list<weak_ptr<ofxWidget>>::iterator end_) {
+auto findIt(const weak_ptr<ofxWidget>& needle_,
+	const list<weak_ptr<ofxWidget>>::iterator start_,
+	const list<weak_ptr<ofxWidget>>::iterator end_) {
 	// find needle in widget list haystack
 	return find_if(start_, end_, [needle = needle_](weak_ptr<ofxWidget>&w) {
 		// finds if it two shared ptrs are the same.
@@ -137,7 +137,7 @@ ofxWidget::~ofxWidget() {
 	// in the list of sAllWidgets, and we won't delete
 	// anything from that list.
 
-	auto it = findIt(mThis, sAllWidgets.begin(),sAllWidgets.end());
+	auto it = findIt(mThis, sAllWidgets.begin(), sAllWidgets.end());
 
 	if (it != sAllWidgets.end()) {
 
@@ -241,19 +241,23 @@ void ofxWidget::updateVisibleWidgetsList() {
 
 void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 {
-	// reorders widgets, bringing the widget pointed to by the iterator it_ to the front of the widget list.
-	//ofLog() << "reorder";
-	if (it_ == sAllWidgets.begin())
-		return;
-
-	// ----------| invariant: element not yet at front.
-
-	auto element = it_->lock();
-
-	if (element == nullptr)
+	if (it_->expired())
 		return;
 
 	// ---------| invariant: element is valid
+
+	auto element = it_->lock();
+
+	// We're conservative with re-ordering.
+	// Let's move the iterator backward to see if we are actually 
+	// already sorted.
+	// If the list were already sorted, then moving back from the current
+	// iterator by the number of its children would bring us 
+	// to the beginning of sAllWidgets. Then, there is no need to re-order.
+	if (std::prev(it_, element->mNumChildren) == sAllWidgets.begin())
+		return;
+
+	// ----------| invariant: element (range) not yet at front.
 
 	/*
 	Algorithm:
@@ -309,9 +313,9 @@ void ofxWidget::bringToFront(std::list<weak_ptr<ofxWidget>>::iterator it_)
 // ----------------------------------------------------------------------
 
 void ofxWidget::draw() {
-	// make sure to draw last to first == back to front.
 	int zOrder = 0;
 	updateVisibleWidgetsList();
+	// note the reverse iterators: we are drawing back to front.
 	for (auto it = sVisibleWidgets.crbegin(); it != sVisibleWidgets.crend(); ++it) {
 		if (auto p = it->lock()) {
 			if (p->onDraw) {
@@ -392,41 +396,31 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 		// as the number of children in sVisibleWidgets is potentially incorrect,
 		// as the number of children there refers to all children of a widget,
 		// and not just the visible children of the widget.
-		auto itAll = (itUnderMouse == sVisibleWidgets.end() ? 
-			sAllWidgets.end() : 
+		auto itPressedWidget = (itUnderMouse == sVisibleWidgets.end() ?
+			sAllWidgets.end() :
 			findIt(*itUnderMouse, sAllWidgets.begin(), sAllWidgets.end()));
 
-		if (itAll != sAllWidgets.end()) {
-			if (!isSame(*itAll, sFocusedWidget)) {
+		if (itPressedWidget != sAllWidgets.end()) {
+			if (!isSame(*itPressedWidget, sFocusedWidget)) {
 				// change in focus detected.
 				// first, let the first element know that it is losing focus
 				if (auto previousElementInFocus = sFocusedWidget.lock())
-					if (previousElementInFocus->onDeactivate)
-						previousElementInFocus->onDeactivate();
+					if (previousElementInFocus->onFocusLost)
+						previousElementInFocus->onFocusLost();
 
-				sFocusedWidget = *itAll;
+				sFocusedWidget = *itPressedWidget;
 
 				// now that the new wiget is at the front, send an activate callback.
-				if (auto nextFocusedWidget = itAll->lock())
-					if (nextFocusedWidget->onActivate)
-						nextFocusedWidget->onActivate();
+				if (auto nextFocusedWidget = sFocusedWidget.lock())
+					if (nextFocusedWidget->onFocusReceived)
+						nextFocusedWidget->onFocusReceived();
 			}
-			if (auto w = itAll->lock()) {
-				// We're conservative with re-ordering.
-				// Let's move the iterator backward to see if we are actually 
-				// already sorted.
-				// If the list were already sorted, then moving back from the current
-				// iterator by the number of its children would bring us 
-				// to the beginning of sAllWidgets. Then, there is no need to re-order.
-				if (std::prev(itAll, w->mNumChildren) != sAllWidgets.begin()) {
-					bringToFront(itAll); // reorder widgets
-				}
-			}
+			bringToFront(itPressedWidget); // reorder widgets
 		} else {
 			// hit test was not successful, no wigets found.
 			if (auto previousElementInFocus = sFocusedWidget.lock())
-				if (previousElementInFocus->onDeactivate)
-					previousElementInFocus->onDeactivate();
+				if (previousElementInFocus->onFocusLost)
+					previousElementInFocus->onFocusLost();
 
 			sFocusedWidget.reset(); // no widget gets the focus, then.
 		}
@@ -490,16 +484,57 @@ bool ofxWidget::keyEvent(ofKeyEventArgs& args_) {
 	}
 	return false;
 }
+
 // ----------------------------------------------------------------------
 
-bool ofxWidget::isAtFront() {
-	return (sAllWidgets.empty()) ? false : isSame(mThis, sAllWidgets.front());
+void ofxWidget::setFocus(bool focus_) {
+
+	if (focus_ == isActivated())
+		return;
+
+	// callback previous widget telling it that it 
+	// loses focus
+	if (auto previousElementInFocus = sFocusedWidget.lock())
+		if (previousElementInFocus->onFocusLost)
+			previousElementInFocus->onFocusLost();
+
+	sFocusedWidget = mThis;
+
+	// callback this widget telling it that it 
+	// receives focus
+	if (auto nextFocusedWidget = sFocusedWidget.lock())
+		if (nextFocusedWidget->onFocusReceived)
+			nextFocusedWidget->onFocusReceived();
 }
 
 // ----------------------------------------------------------------------
 
-bool ofxWidget::isActivated() {
+const bool ofxWidget::isAtFront() const {
+	if (sAllWidgets.empty())
+		return false;
+	auto it = findIt(mThis, sAllWidgets.begin(), sAllWidgets.end());
+	return (std::prev(it, mNumChildren) == sAllWidgets.begin());
+}
+
+// ----------------------------------------------------------------------
+
+const bool ofxWidget::isActivated() const {
 	return (sAllWidgets.empty()) ? false : isSame(mThis, sFocusedWidget);
+}
+
+// ----------------------------------------------------------------------
+
+const bool ofxWidget::containsFocus() const {
+	if (isSame(sFocusedWidget, mThis))
+		return true;
+
+	auto itThis = findIt(mThis, sAllWidgets.begin(), sAllWidgets.end());
+
+	for (int i = 0; i != mNumChildren; ++i) {
+		if (isSame(sFocusedWidget, *--itThis))
+			return true;
+	}
+	return false;
 }
 
 // ----------------------------------------------------------------------
@@ -507,16 +542,16 @@ bool ofxWidget::isActivated() {
 void ofxWidget::moveBy(const ofVec2f & delta_) {
 
 	// find the iterator to the current widget
-
 	auto it = findIt(mThis, sAllWidgets.begin(), sAllWidgets.end());
-	auto rIt = std::reverse_iterator<decltype(it)>(it); // make a reverse iterator out of it.
+	// convert to a reverse iterator
+	auto rIt = std::reverse_iterator<decltype(it)>(it);
 
 	mRect.position += delta_;
 
-	// all children (if any) are lined up physically before in sAllWidgets.
+	// all children (if any) are lined up *before* a parent in sAllWidgets.
 	// we're using a reverse iterator so that we don't get a problem 
 	// at the very physically first element.
-	for (int i = 0; i < mNumChildren && rIt != sAllWidgets.rend(); i++, rIt++) {
+	for (int i = 0; i < int(mNumChildren) && rIt != sAllWidgets.rend(); i++, rIt++) {
 		if (auto w = rIt->lock()) {
 			w->mRect.position += delta_;
 		}

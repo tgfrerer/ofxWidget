@@ -156,68 +156,85 @@ class ofxWidget
 	static ofVec2f sLastMousePos;
 
 	ofxWidget();
-	ofRectangle mRect; // widget rect on screen
+	ofRectangle mRect;					// widget rect on screen
 
-	bool mVisible = true; // layer visiblity
-	bool mHover = false;  // mouse-over detected?
+	bool mVisible = true;				// layer visiblity
+	bool mHover = false;				// mouse-over detected?
 
-	size_t mNumChildren = 0;	 // number of children for this widget.
-	std::weak_ptr<ofxWidget> mParent; // parent widget for this.
-	std::weak_ptr<ofxWidget> mThis; // weak ptr to self
+	size_t mNumChildren = 0;			// number of children for this widget.
+	std::weak_ptr<ofxWidget> mParent;	// parent widget for this.
+	std::weak_ptr<ofxWidget> mThis;		// weak ptr to self
 
 public:
 	~ofxWidget();
 
-	const ofRectangle& getRect()const {
-		return mRect;
-	};
-
-	// set the rect for a widget. absolute coordinates.
-	void setRect(const ofRectangle& rect_) {
-		mRect = rect_;
-	};
+	void setRect(const ofRectangle& rect_); //< set the widget rect in absolute coordinates.
+	const ofRectangle& getRect() const;	    //< return the widget's rect in absolute coordinates.
 
 	void moveBy(const ofVec2f& delta_); //< Move this widget (and any children) by an offset
-	void moveTo(const ofVec2f& pos_);
+	void moveTo(const ofVec2f& pos_);   //< Move this widget (and any children) to an absolute position
 
-	void setVisibility(bool visible_) {
-		if (visible_ != mVisible)
-			bVisibleListDirty = true;
-		mVisible = visible_;
-	}
+	void setVisibility(bool visible_);	//< Set this widget's visibility. Children of invisible widgets will not be drawn nor updated.
+	const bool getVisibility() const ;  //< Get this widget's visibility
 
-	const bool getVisibility() const {
-		return mVisible;
-	};
+	const bool getHover() const;		//< Return whether the mouse is currently over this widget
 
-	const bool getHover() const {
-		return mHover;
-	}
-
-	std::function<void(ofMouseEventArgs&)> onMouse; // this method be called on mouse event
-	std::function<void(ofKeyEventArgs&)> onKey; // this method be called on mouse event
+	std::function<void(ofMouseEventArgs&)> onMouse; //< Mouse event callback
+	std::function<void(ofKeyEventArgs&)> onKey;		//< Keyboard event callback
 	
-	std::function<void()> onActivate;			// called when this widget gets activated
-	std::function<void()> onDeactivate;			// called when this widget gets deactivated
-	std::function<void()> onMouseEnter;			// called when mouse enters this widget
-	std::function<void()> onMouseLeave;			// called when mouse exits  this widget
+	std::function<void()> onFocusReceived;	//< Activation callback	(when widget receives focus)
+	std::function<void()> onFocusLost;	//< Deactivation callback (when widget loses focus)
+	std::function<void()> onMouseEnter;	//< Mouse enter callback
+	std::function<void()> onMouseLeave;	//< Mouse exit callback
 
-	std::function<void()> onUpdate; // update method for the widget.	Only called on visible widgets.
-	std::function<void()> onDraw;   // draw method for the widget. Only called on visible widgets.
+	std::function<void()> onUpdate; //<Once-per frame update callback for widget. Only called if widget is visible.	Update callbacks will be issued based on z-order, back to front.
+	std::function<void()> onDraw;   //<Once-per frame draw callback for widget. Only called if widget is visible. Draw callbacks will be issued over based on z-order, back to front.
 	
-	void setParent(std::shared_ptr<ofxWidget>& p_); // set a widget's parent, this will update the children list, by calling a method over all widgets.
+	void setParent(std::shared_ptr<ofxWidget>& p_); //< set a widget's parent, this will update the children list, by calling a method over all widgets.
+	std::weak_ptr<ofxWidget>& getParent();
 
-	std::weak_ptr<ofxWidget>& getParent() {
-		return mParent;
-	};
-
-	static void draw();			// draw all widgets
-	static void update();		// update all widgets
+	static void update();		//< Trigger update callbacks for all widgets. The callbacks will be issued in the correct z-order, back to front.
+	static void draw();			//< Trigger draw callbacks for all widgets. The callbacks will be issued in the correct z-order, back to front.
+	
 
 public: // widget logic functions
-	bool isAtFront(); //< returns whether this widget is at the front
-	bool isActivated();  //< returns whether this widget has the focus
+	// FIXME: isatfront should take number of children into account. it is incorrect for 
+	// parent widgets.
+	void setFocus(bool focus_);	 // manually give widget focus
+
+	const bool isAtFront() const;		//< returns whether this widget as far to the front as possible
+	const bool isActivated() const;		//< returns whether this widget has the focus
+	const bool containsFocus() const;	//< returns whether this widget or one of its children the focus
 public: // factory function
 	static shared_ptr<ofxWidget> make(const ofRectangle& rect_);
-
 };
+
+// ----------------------------------------------------------------------
+ 
+inline std::weak_ptr<ofxWidget>& ofxWidget::getParent() {
+		return mParent;
+};
+
+inline const bool ofxWidget::getHover() const {
+	return mHover;
+}
+
+inline const bool ofxWidget::getVisibility() const {
+	return mVisible;
+};
+
+inline void ofxWidget::setVisibility(bool visible_) {
+	if (visible_ != mVisible)
+		bVisibleListDirty = true;
+	mVisible = visible_;
+};
+
+inline void ofxWidget::setRect(const ofRectangle& rect_) {
+	mRect = rect_;
+}
+
+inline const ofRectangle& ofxWidget::getRect() const {
+	return mRect;
+};
+
+// ----------------------------------------------------------------------
