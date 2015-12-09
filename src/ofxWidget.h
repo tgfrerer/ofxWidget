@@ -182,8 +182,8 @@ public:
 	std::function<void(ofMouseEventArgs&)> onMouse; //< Mouse event callback
 	std::function<void(ofKeyEventArgs&)> onKey;		//< Keyboard event callback
 	
-	std::function<void()> onFocusReceived;	//< Activation callback	(when widget receives focus)
-	std::function<void()> onFocusLost;	//< Deactivation callback (when widget loses focus)
+	std::function<void()> onFocusEnter;	//< Activation callback	(when widget receives focus)
+	std::function<void()> onFocusLeave;	//< Deactivation callback (when widget loses focus)
 	std::function<void()> onMouseEnter;	//< Mouse enter callback
 	std::function<void()> onMouseLeave;	//< Mouse exit callback
 

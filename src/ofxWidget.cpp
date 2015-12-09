@@ -405,22 +405,22 @@ bool ofxWidget::mouseEvent(ofMouseEventArgs& args_) {
 				// change in focus detected.
 				// first, let the first element know that it is losing focus
 				if (auto previousElementInFocus = sFocusedWidget.lock())
-					if (previousElementInFocus->onFocusLost)
-						previousElementInFocus->onFocusLost();
+					if (previousElementInFocus->onFocusLeave)
+						previousElementInFocus->onFocusLeave();
 
 				sFocusedWidget = *itPressedWidget;
 
 				// now that the new wiget is at the front, send an activate callback.
 				if (auto nextFocusedWidget = sFocusedWidget.lock())
-					if (nextFocusedWidget->onFocusReceived)
-						nextFocusedWidget->onFocusReceived();
+					if (nextFocusedWidget->onFocusEnter)
+						nextFocusedWidget->onFocusEnter();
 			}
 			bringToFront(itPressedWidget); // reorder widgets
 		} else {
 			// hit test was not successful, no wigets found.
 			if (auto previousElementInFocus = sFocusedWidget.lock())
-				if (previousElementInFocus->onFocusLost)
-					previousElementInFocus->onFocusLost();
+				if (previousElementInFocus->onFocusLeave)
+					previousElementInFocus->onFocusLeave();
 
 			sFocusedWidget.reset(); // no widget gets the focus, then.
 		}
@@ -495,16 +495,16 @@ void ofxWidget::setFocus(bool focus_) {
 	// callback previous widget telling it that it 
 	// loses focus
 	if (auto previousElementInFocus = sFocusedWidget.lock())
-		if (previousElementInFocus->onFocusLost)
-			previousElementInFocus->onFocusLost();
+		if (previousElementInFocus->onFocusLeave)
+			previousElementInFocus->onFocusLeave();
 
 	sFocusedWidget = mThis;
 
 	// callback this widget telling it that it 
 	// receives focus
 	if (auto nextFocusedWidget = sFocusedWidget.lock())
-		if (nextFocusedWidget->onFocusReceived)
-			nextFocusedWidget->onFocusReceived();
+		if (nextFocusedWidget->onFocusEnter)
+			nextFocusedWidget->onFocusEnter();
 }
 
 // ----------------------------------------------------------------------
