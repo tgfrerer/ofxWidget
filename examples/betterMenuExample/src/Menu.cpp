@@ -1,55 +1,49 @@
 #include "Menu.h"
 #include "ofGraphics.h"
+#include "ofUtils.h"
 
 using namespace std;
 
-// factory method to create menu
-unique_ptr<Menu> Menu::make_unique(const ofRectangle& rect_) {
-	unique_ptr<Menu> m = unique_ptr<Menu>(new Menu);
-	m->mCanvas = ofxWidget::make(rect_);
-	return std::move(m);
-};
 
 // ----------------------------------------------------------------------
 // static draw method - 
-void drawButton(const ofRectangle& rect_, bool hover_ = false) {
+void drawButtonBackground(const ofRectangle& rect_, bool hover_ = false) {
 	if (hover_) {
-		ofSetColor(ofColor::lightCoral);
+		ofSetColor(ofFloatColor(0.4));
 	} else {
-		ofSetColor(ofColor::coral);
+		ofSetColor(ofFloatColor(0.2));
 	}
 	ofFill();
 	ofDrawRectangle(rect_);
 }
 
 // ----------------------------------------------------------------------
+// adds draw method based on detected property type.
+void applySkin(shared_ptr<ofxWidget>& w_, const BaseGuiProperties* props_) {
 
-void applyButtonBehaviour(shared_ptr<ofxWidget>& button_) {
-
-	button_->onDraw = [&w = button_]() {
-		drawButton(w->getRect(), w->getHover());
-	};
-
-	button_->onMouse = [&w = button_](ofMouseEventArgs& args) {
-		if (args.type == ofMouseEventArgs::Released && w->getRect().inside(args)) {
-			// mouse released.
-			ofLogNotice() << "Button clicked!";
-		}
-	};
+	if (auto p = dynamic_cast<const GuiButtonProperties*>(props_)) {
+		// make a local copy of the button properties for drawing
+		w_->onDraw = [&w = w_, cachedProps = *p]() {
+			drawButtonBackground(w->getRect(), w->getHover());
+			ofSetColor(ofColor::white);
+			auto rect = w->getRect();
+			ofDrawBitmapString(cachedProps.label, rect.x +20, rect.y + 20);
+		};
+	}
 }
 
 // ----------------------------------------------------------------------
 
 void MenuItem::setup(const MenuItem::Settings& s_) {
 	if (auto p = s_.weakParent.lock()) {
-		mWidget = ofxWidget::make(ofRectangle(s_.rect.x, s_.rect.y, s_.rect.width, s_.rect.height));
+		auto &rect = s_.properties.rect;
+		mWidget = ofxWidget::make(ofRectangle(rect.x, rect.y, rect.width, rect.height));
 		mWidget->setParent(s_.weakParent.lock());
 
-		// this is an interesting pattern: 
-		// it is a bit like strategy, but maybe also a bit like decorator
-		applyButtonBehaviour(mWidget); // makes the widget behave like a button
-		// override default click behaviour
-		mWidget->onMouse = [rect = s_.rect, clickFn = s_.onClick](ofMouseEventArgs& args_) {
+		applySkin(mWidget, &s_.properties); // makes the widget draw like a button
+		// note that we make local copies of the settings, 
+		// since settings is a temporary object.
+		mWidget->onMouse = [rect = rect, clickFn = s_.onClick](ofMouseEventArgs& args_) {
 			if (args_.type == ofMouseEventArgs::Released && rect.inside(args_)) {
 				if (clickFn)
 					clickFn();
@@ -65,31 +59,30 @@ void MenuItem::setup(const MenuItem::Settings& s_) {
 
 void Menu::setup() {
 
-	
 	mCanvas->onDraw = [&w = mCanvas]() {
 		ofSetColor(ofColor::lightGrey);
 		ofFill();
 		ofDrawRectangle(w->getRect());
 	};
 
-	// all our elements need to have these two methods bound
-	// so that as long as one element has the focus, we're golden.
-
 	const auto & rect = mCanvas->getRect();
 
-	for (int i = 0; i < 5; i++) {
+	mMenuItems.clear();
+
+	for (int i = 0; i < mItems.size(); i++) {
 		MenuItem::Settings s;
 		s.weakParent = mCanvas;
-		s.rect = ofRectangle(rect.position + ofVec2f(0.f, i * 30.f),  rect.width, 30.f );
-		s.onClick = [num=i]() {
-			ofLogNotice() << "Menu item " << num << " clicked.";
+		s.properties.rect = ofRectangle(rect.position + ofVec2f(0.f, i * 30.f),  rect.width, 30.f );
+		s.properties.label = mItems[i].label;
+		s.onClick = [num=i, this]() {
+			onItemClick(num);
 		};
 		mMenuItems.emplace_back();
 		mMenuItems.back().setup(s);
 	}
 
-	mCanvas->setRect({ rect.position, rect.width, (5) * 30.f });
-
+	mCanvas->setRect({ rect.position, rect.width, (mItems.size()) * 30.f });
+	
 	// -------
 
 	// put the menu in focus.
@@ -99,14 +92,28 @@ void Menu::setup() {
 // ----------------------------------------------------------------------
 
 const bool Menu::shouldClose() const {
+	if (mWantsClose)
+		return true;
 	if (mCanvas) {
 		return (mCanvas->containsFocus() == false);
 	} else {
-		// canvas does not exist.
-		// should close.
 		return true;
 	}
 }
 
 // ----------------------------------------------------------------------
+// responder for all menu items
+void Menu::onItemClick(int index_) {
+	if (index_ < int(mItems.size())) {
+		mItems[index_].fn();
+	}
+	mWantsClose = true;
+}
 
+// ----------------------------------------------------------------------
+// static factory to create menu
+unique_ptr<Menu> Menu::make_unique(const ofRectangle& rect_) {
+	unique_ptr<Menu> m = unique_ptr<Menu>(new Menu);
+	m->mCanvas = ofxWidget::make(rect_);
+	return std::move(m);
+};

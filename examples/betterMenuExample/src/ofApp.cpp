@@ -26,7 +26,11 @@ void ofApp::draw() {
 //--------------------------------------------------------------
 
 void ofApp::createContextMenu(int x_, int y_) {
-	mContextMenu = Menu::make_unique({ float(x_), float(y_), 200.f, 200.f });
+	mContextMenu = Menu::make_unique({ float(x_), float(y_), 200.f, 0.f });
+	mContextMenu->setItems({
+		{ "This is a", []() {}},
+		{ "Test",      []() {}},
+	});
 	mContextMenu->setup();
 }
 
