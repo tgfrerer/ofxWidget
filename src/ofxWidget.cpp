@@ -164,7 +164,7 @@ ofxWidget::~ofxWidget() {
 void ofxWidget::setParent(std::shared_ptr<ofxWidget>& p_)
 {
 	if (auto p = mParent.lock()) {
-		// TODO: 
+		// TODO: handle already parented widgets 
 		// how weird! this widget has a parent already.
 		// delete the widgets from the parent's child list
 		ofLogWarning() << "Widget already has parent!";
