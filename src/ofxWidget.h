@@ -198,8 +198,7 @@ public:
 	
 
 public: // widget logic functions
-	// FIXME: isatfront should take number of children into account. it is incorrect for 
-	// parent widgets.
+
 	void setFocus(bool focus_);	 // manually give widget focus
 
 	const bool isAtFront() const;		//< returns whether this widget as far to the front as possible
