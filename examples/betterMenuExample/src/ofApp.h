@@ -7,6 +7,7 @@ class ofApp : public ofBaseApp{
 
 	std::unique_ptr<Menu> mContextMenu;
 	
+	ofColor mBackgroundColor = ofColor::darkGray;
 
 	public:
 		void setup();

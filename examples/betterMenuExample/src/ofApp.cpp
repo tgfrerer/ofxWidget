@@ -18,9 +18,12 @@ void ofApp::update() {
 
 //--------------------------------------------------------------
 void ofApp::draw() {
+	ofClear(mBackgroundColor);
 	ofPushStyle();
 	ofxWidget::draw();
 	ofPopStyle();
+	ofSetColor(ofColor::white);
+	ofDrawBitmapString("Right-click to select background color", 20, 20);
 }
 
 //--------------------------------------------------------------
@@ -28,8 +31,8 @@ void ofApp::draw() {
 void ofApp::createContextMenu(int x_, int y_) {
 	mContextMenu = Menu::make_unique({ float(x_), float(y_), 200.f, 0.f });
 	mContextMenu->setItems({
-		{ "This is a", []() {}},
-		{ "Test",      []() {}},
+		{ "Green",	[&col = mBackgroundColor]() { col = ofColor::darkGreen;}},
+		{ "Red",  [&col = mBackgroundColor]() { col = ofColor::darkRed;}},
 	});
 	mContextMenu->setup();
 }
