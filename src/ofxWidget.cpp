@@ -3,9 +3,36 @@
 #include "ofUtils.h"
 #include <algorithm>
 // ----------------------------------------------------------------------
+/*
+   _____    ___
+  /    /   /  /     ofxWidget
+ /  __/ * /  /__    (c) ponies & light ltd., 2015-2016.
+/__/     /_____/    poniesandlight.co.uk
+
+ofxWidget
+Created by @tgfrerer 2015.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+*/
+// ----------------------------------------------------------------------
 
 // we want to keep track of all widgets that have been created.
-
 // this is a "flattened" version of our widget scene graph. 
 std::list<weak_ptr<ofxWidget>> sAllWidgets;
 
@@ -36,14 +63,6 @@ auto findIt(const weak_ptr<ofxWidget>& needle_,
 		return (!w.owner_before(needle) && !needle.owner_before(w));
 	});
 }
-
-// ----------------------------------------------------------------------
-
-//auto findIt(shared_ptr<ofxWidget>& needle_) {
-//	// find needle in widget list haystack
-//	weak_ptr<ofxWidget> wkP = needle_;
-//	return findIt(wkP, sAllWidgets.begin(), sAllWidgets.end());
-//}
 
 // ----------------------------------------------------------------------
 
