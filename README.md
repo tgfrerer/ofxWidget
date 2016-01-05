@@ -6,10 +6,9 @@ through composition.
 Ok. I exaggerate. It allows its host to respond to
 mouse and keyboard events, though. It also does z-ordering.
 And draws the host objects in the correct order.
-As if that wasn't enough.
+As if that wasn't enough. It's useful for GUIs.
 
-A widget has an mRect, which is the screen-space canvas it 
-is allowed to draw into. 
+A widget knows the screen-space rectangle it is allowed to draw into. 
 
 It also (optionally) holds function objects to:
 
@@ -18,7 +17,7 @@ It also (optionally) holds function objects to:
   + respond to keyboard events
 
 which you can bind to from the host. With "host", I mean a 
-class that has a widget, holding it with a pointer.
+class that "has a" widget, holding it with a shared pointer.
 
 ## Caveat
 
